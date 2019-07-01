@@ -1,1 +1,1 @@
-# js-webpack-boilerplate
+# artofwar
