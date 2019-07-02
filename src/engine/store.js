@@ -74,7 +74,11 @@ class Store {
         });
     }
 
-    remove(ids) {}
+    remove(ids) {
+        ids.forEach(id => {
+            delete this.items[id];
+        });
+    }
 
     select(ids) {
         ids.forEach(id => {
@@ -92,7 +96,7 @@ class Store {
         }
 
         ids.forEach(id => {
-            this.selected[id] = undefined;
+            delete this.selected[id];
         });
     }
 }
