@@ -14,10 +14,24 @@ class Store {
         return instance;
     }
 
-    getArray(ids = null) {
+    getArray(ids = null, { aggregateType = false } = {}) {
+        let things = [];
         if (!ids) {
-            return Object.keys(this.items).map(id => this.items[id]);
+            things = Object.keys(this.items).map(id => this.items[id]);
+        } else {
+            things = Object.keys(this.items)
+                .map(id => this.items[id])
+                .filter(thing => ids.includes(thing.id));
         }
+
+        if (aggregateType) {
+            return things.map(thing => ({
+                ...thing,
+                ...THING_TYPES[thing.type]
+            }));
+        }
+
+        return things;
     }
 
     getObject(ids = null) {
@@ -26,11 +40,11 @@ class Store {
         }
     }
 
-    getAtCoordinates(x, y, aggregateSelection = false) {
+    getAtCoordinates(x, y, { aggregateSelection = false } = {}) {
         const match = this.getArray().find(thing => {
             const thingType = THING_TYPES[thing.type];
-            const xMatch = x >= thing.x && x <= thing.x + thingType.width;
-            const yMatch = y >= thing.y && y <= thing.y + thingType.height;
+            const xMatch = x >= thing.x && x < thing.x + thingType.width;
+            const yMatch = y >= thing.y && y < thing.y + thingType.height;
             return xMatch && yMatch;
         });
 
@@ -44,8 +58,16 @@ class Store {
         return match;
     }
 
-    getSelectionArray() {
-        return Object.keys(this.selected).map(id => this.selected[id]);
+    getSelectionArray({ aggregateThings = false } = {}) {
+        let selected = Object.keys(this.selected).map(id => this.selected[id]);
+
+        if (aggregateThings) {
+            selected.map(thing => ({
+                ...this.items[thing.id]
+            }));
+        }
+
+        return selected;
     }
 
     add(things) {
@@ -64,11 +86,11 @@ class Store {
         };
     }
 
-    update(thingsToUpdate) {
+    update(thingsToUpdate, { replace = false } = {}) {
         thingsToUpdate.forEach(thingToUpdate => {
             const thing = this.items[thingToUpdate.id];
             this.items[thingToUpdate.id] = {
-                ...thing,
+                ...(!replace && { ...thing }),
                 ...thingToUpdate
             };
         });
@@ -83,8 +105,7 @@ class Store {
     select(ids) {
         ids.forEach(id => {
             this.selected[id] = {
-                id,
-                selected: true
+                id
             };
         });
     }
