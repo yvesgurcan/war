@@ -3,6 +3,11 @@ export const TILE_SIZE = 32;
 export const PLAYER_VIEW_WIDTH = 14;
 export const PLAYER_VIEW_HEIGHT = 14;
 
+export const MAX_FPS = 1000 / 30;
+
+export const BUILDING = 'building';
+export const UNIT = 'unit';
+
 export const WORLD_CLIMATES = {
     forest: {
         grass: {
@@ -28,19 +33,20 @@ export const WORLD_CLIMATES = {
 
 export const THING_TYPES = {
     townhall: {
-        class: 'building',
+        class: BUILDING,
         height: 4,
         width: 4
     },
     farm: {
-        class: 'building',
+        class: BUILDING,
         height: 2,
         width: 2
     },
     peasant: {
-        class: 'unit',
+        class: UNIT,
         height: 1,
-        width: 1
+        width: 1,
+        speed: 150 / 1000
     }
 };
 
