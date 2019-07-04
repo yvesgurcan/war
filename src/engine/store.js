@@ -1,5 +1,5 @@
 import uuid from 'uuid';
-import { THING_TYPES } from './constants';
+import { THING_TYPES, THING_PROPERTIES } from './constants';
 
 let instance = null;
 
@@ -40,6 +40,10 @@ class Store {
         }
     }
 
+    getById(id) {
+        return this.items[id];
+    }
+
     getAtCoordinates(x, y, { aggregateSelection = false } = {}) {
         const match = this.getArray().find(thing => {
             const thingType = THING_TYPES[thing.type];
@@ -56,6 +60,43 @@ class Store {
         }
 
         return match;
+    }
+
+    getCollision(source, destination, { right, left, up, down }) {
+        const destinationSnappedX =
+            Math.floor(destination.x) + (right && source.width);
+        const destinationSnappedY =
+            Math.floor(destination.y) + (down && source.height);
+
+        const blocked = this.getArray(null, {
+            aggregateType: true
+        }).some(thing => {
+            if (thing.id === source.id) {
+                return false;
+            }
+            const thingSnappedX = Math.floor(thing.x);
+            const thingSnappedY = Math.floor(thing.y);
+            const thingArea = {
+                minX: thingSnappedX,
+                maxX: thingSnappedX + thing.width - 1,
+                minY: thingSnappedY,
+                maxY: thingSnappedY + thing.height - 1
+            };
+
+            minX = thingArea.minX;
+            if (
+                destinationSnappedY >= thingArea.minY &&
+                destinationSnappedY <= thingArea.maxY &&
+                destinationSnappedX >= thingArea.minX &&
+                destinationSnappedX <= thingArea.maxX
+            ) {
+                return true;
+            }
+
+            return false;
+        });
+
+        return blocked;
     }
 
     getSelectionArray({ aggregateThings = false } = {}) {
@@ -89,10 +130,12 @@ class Store {
     update(thingsToUpdate, { replace = false } = {}) {
         thingsToUpdate.forEach(thingToUpdate => {
             const thing = this.items[thingToUpdate.id];
-            this.items[thingToUpdate.id] = {
+            const updatedThing = {
                 ...(!replace && { ...thing }),
                 ...thingToUpdate
             };
+
+            this.items[thingToUpdate.id] = this.sanitizeThing(updatedThing);
         });
     }
 
@@ -119,6 +162,15 @@ class Store {
         ids.forEach(id => {
             delete this.selected[id];
         });
+    }
+
+    sanitizeThing(thingWithExtraProperties) {
+        let strippedThing = {};
+        THING_PROPERTIES.forEach(property => {
+            strippedThing[property] = thingWithExtraProperties[property];
+        });
+
+        return strippedThing;
     }
 }
 
