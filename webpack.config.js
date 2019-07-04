@@ -19,6 +19,7 @@ module.exports = {
     watch: true,
     devServer: {
         overlay: true,
-        writeToDisk: true
+        writeToDisk: true,
+        stats: 'minimal'
     }
 };
