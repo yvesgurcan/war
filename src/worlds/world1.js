@@ -6,22 +6,42 @@ export default {
     },
     things: [
         {
-            type: 'peasant',
+            type: 'catapult',
             owner: 0,
-            x: 3,
-            y: 2
+            x: 0,
+            y: 0
+        },
+        {
+            type: 'catapult',
+            owner: 0,
+            x: 0,
+            y: 8
         },
         {
             type: 'townhall',
             owner: 0,
-            x: 5,
-            y: 1
+            x: 2,
+            y: 3
+        }
+        /*
+        {
+            type: 'peasant',
+            owner: 0,
+            x: 6,
+            y: 10
         },
         {
             type: 'farm',
             owner: 0,
             x: 4,
             y: 6
+        },
+        {
+            type: 'peasant',
+            owner: 1,
+            x: 10,
+            y: 9
         }
+        */
     ]
 };
