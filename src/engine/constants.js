@@ -47,7 +47,15 @@ export const THING_TYPES = {
         height: 1,
         width: 1,
         speed: 150 / 1000
+    },
+    catapult: {
+        class: UNIT,
+        height: 2,
+        width: 2,
+        speed: 200 / 1000
     }
 };
+
+export const THING_PROPERTIES = ['id', 'type', 'owner', 'x', 'y', 'goal'];
 
 export const RIGHT_CLICK = 3;
