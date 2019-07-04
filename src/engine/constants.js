@@ -50,8 +50,8 @@ export const THING_TYPES = {
     },
     catapult: {
         class: UNIT,
-        height: 2,
-        width: 2,
+        height: 1,
+        width: 1,
         speed: 200 / 1000
     }
 };
