@@ -58,4 +58,6 @@ export const THING_TYPES = {
 
 export const THING_PROPERTIES = ['id', 'type', 'owner', 'x', 'y', 'goal'];
 
+export const BUILDING_NAMES = ['farm'];
+
 export const RIGHT_CLICK = 3;

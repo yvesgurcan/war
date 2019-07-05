@@ -6,7 +6,9 @@ import {
     WORLD_CLIMATES,
     RIGHT_CLICK,
     UNIT,
-    MAX_FPS
+    MAX_FPS,
+    BUILDING_NAMES,
+    THING_TYPES
 } from './constants';
 import { getElem, createElem } from './utils';
 
@@ -31,6 +33,8 @@ let players = [
 class Engine {
     constructor() {
         this.lastCycle = null;
+        this.buildPreview = null;
+
         instance = this;
 
         this.initWorld();
@@ -159,6 +163,29 @@ class Engine {
         store.update(updatedThings);
     }
 
+    startBuildPreview(buildingType) {
+        const thing = THING_TYPES[buildingType];
+        this.buildPreview = { ...thing };
+
+        const thingsContainer = getElem('things');
+        const image = createElem('img');
+        image.id = 'build-preview';
+        image.style.position = 'absolute';
+        image.style.zIndex = -1; // don't show until the mouse moves on world view
+        image.style.width = thing.width * TILE_SIZE + 1;
+        image.style.height = thing.height * TILE_SIZE + 1;
+        image.style.background = 'grey';
+        image.style.boxSizing = 'border-box';
+        image.style.border = '1px solid black';
+        thingsContainer.appendChild(image);
+    }
+
+    stopBuildPreview() {
+        this.buildPreview = null;
+        const buildPreview = getElem('build-preview');
+        buildPreview.parentNode.removeChild(buildPreview);
+    }
+
     listenToMouse() {
         document.onclick = event => {
             const id = event.target.id;
@@ -171,9 +198,10 @@ class Engine {
             const coordinates = { x, y };
 
             const selected = store.getSelectionArray({ aggregateThings: true });
-            if (event.which === RIGHT_CLICK) {
-                console.log('unselect all');
-                this.unselectAllThings();
+
+            if (!this.buildPreview && BUILDING_NAMES.includes(id)) {
+                console.log('start build preview', id);
+                this.startBuildPreview(id);
             } else if (selected.length > 0 && !target) {
                 const selectedIds = selected.map(thing => thing.id);
                 const thingDetails = store.getArray(selectedIds, {
@@ -198,6 +226,27 @@ class Engine {
 
         document.oncontextmenu = event => {
             event.preventDefault();
+            if (this.buildPreview) {
+                console.log('stop build preview');
+                this.stopBuildPreview();
+            } else {
+                console.log('unselect all');
+                this.unselectAllThings();
+            }
+        };
+
+        document.onmousemove = event => {
+            if (this.buildPreview) {
+                const rect = event.target.getBoundingClientRect();
+                const x = Math.floor(event.clientX / TILE_SIZE);
+                const y = Math.floor(event.clientY / TILE_SIZE);
+
+                this.updateBuildPreview({
+                    thingType: this.buildPreview,
+                    x,
+                    y
+                });
+            }
         };
     }
 
@@ -280,6 +329,15 @@ class Engine {
                 image.title = JSON.stringify(thing, null, 2);
             }
         });
+    }
+
+    updateBuildPreview(preview) {
+        const image = getElem('build-preview');
+        image.style.left = preview.x * TILE_SIZE;
+        image.style.top = preview.y * TILE_SIZE;
+        if (image.style.zIndex !== 100) {
+            image.style.zIndex = 100;
+        }
     }
 
     gameLoop() {
