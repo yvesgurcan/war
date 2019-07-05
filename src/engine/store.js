@@ -40,8 +40,17 @@ class Store {
         }
     }
 
-    getById(id) {
-        return this.items[id];
+    getById(id, { aggregateType = false } = {}) {
+        const thing = this.items[id];
+
+        if (thing && aggregateType) {
+            return {
+                ...thing,
+                ...THING_TYPES[thing.type]
+            };
+        }
+
+        return thing;
     }
 
     getAtCoordinates(x, y, { aggregateSelection = false } = {}) {
@@ -62,11 +71,49 @@ class Store {
         return match;
     }
 
-    getCollision(source, destination, { right, left, up, down }) {
+    getCollision(source) {
+        const snappedX = Math.floor(source.x);
+        const snappedY = Math.floor(source.y);
+
+        const blocked = this.getArray(null, {
+            aggregateType: true
+        }).some(thing => {
+            if (thing.id === source.id) {
+                return false;
+            }
+            const thingSnappedX = Math.floor(thing.x);
+            const thingSnappedY = Math.floor(thing.y);
+            const thingArea = {
+                minX: thingSnappedX,
+                maxX: thingSnappedX + thing.width - 1,
+                minY: thingSnappedY,
+                maxY: thingSnappedY + thing.height - 1
+            };
+
+            if (
+                snappedY + source.height - 1 >= thingArea.minY &&
+                snappedY <= thingArea.maxY &&
+                snappedX + source.width - 1 >= thingArea.minX &&
+                snappedX <= thingArea.maxX
+            ) {
+                return true;
+            }
+
+            return false;
+        });
+
+        return blocked;
+    }
+
+    getCollisionWhileMoving(
+        source,
+        destination = {},
+        { right, left, up, down } = {}
+    ) {
         const destinationSnappedX =
-            Math.floor(destination.x) + (right && source.width);
+            Math.floor(destination.x || source.x) + (right && source.width);
         const destinationSnappedY =
-            Math.floor(destination.y) + (down && source.height);
+            Math.floor(destination.y || source.y) + (down && source.height);
 
         const blocked = this.getArray(null, {
             aggregateType: true
@@ -112,8 +159,10 @@ class Store {
 
     add(things) {
         let thingMap = {};
+        let ids = [];
         things.forEach(thing => {
             let id = uuid();
+            ids.push(id);
             thingMap[id] = {
                 id,
                 ...thing
@@ -124,6 +173,8 @@ class Store {
             ...this.items,
             ...thingMap
         };
+
+        return ids;
     }
 
     update(thingsToUpdate, { replace = false } = {}) {

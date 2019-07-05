@@ -42,8 +42,14 @@ export const THING_TYPES = {
         height: 2,
         width: 2
     },
+    barracks: {
+        class: BUILDING,
+        height: 3,
+        width: 3
+    },
     peasant: {
         class: UNIT,
+        builder: true,
         height: 1,
         width: 1,
         speed: 150 / 1000
@@ -58,6 +64,8 @@ export const THING_TYPES = {
 
 export const THING_PROPERTIES = ['id', 'type', 'owner', 'x', 'y', 'goal'];
 
-export const BUILDING_NAMES = ['farm'];
+export const BUILDING_NAMES = Object.keys(THING_TYPES).filter(
+    key => THING_TYPES[key].class === BUILDING
+);
 
 export const RIGHT_CLICK = 3;

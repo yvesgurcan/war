@@ -6,7 +6,7 @@ export default {
     },
     things: [
         {
-            type: 'catapult',
+            type: 'peasant',
             owner: 0,
             x: 4,
             y: 2
@@ -16,14 +16,14 @@ export default {
             owner: 0,
             x: 3,
             y: 6
-        }
-        /*
+        },
         {
             type: 'farm',
             owner: 0,
-            x: 10,
+            x: 6,
             y: 10
-        },
+        }
+        /*
         {
             type: 'catapult',
             owner: 0,
