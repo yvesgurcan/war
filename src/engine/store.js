@@ -83,7 +83,6 @@ class Store {
                 maxY: thingSnappedY + thing.height - 1
             };
 
-            minX = thingArea.minX;
             if (
                 destinationSnappedY >= thingArea.minY &&
                 destinationSnappedY <= thingArea.maxY &&
