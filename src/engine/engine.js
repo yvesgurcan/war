@@ -41,7 +41,6 @@ class Engine {
         this.initGrid();
         this.initMenu();
         this.initPlayers();
-        this.initStore();
         this.initThings();
         this.listenToMouse();
         this.gameLoop();
@@ -103,13 +102,15 @@ class Engine {
         this.currentPlayer = 0;
     }
 
-    initStore() {
-        store.add(world.things);
-    }
-
     initThings() {
-        const things = store.getArray(null, { aggregateType: true });
-        things.forEach(thing => this.spawnThing(thing));
+        world.things.forEach(thing => {
+            const thingWithType = {
+                ...thing,
+                ...THING_TYPES[thing.type]
+            };
+            const thingInstance = this.instantiateThing(thing);
+            this.spawnThing({ ...thingWithType, ...thingInstance });
+        });
     }
 
     /* Menus */
@@ -206,9 +207,9 @@ class Engine {
                 ...target,
                 owner: this.currentPlayer
             };
-            const id = store.add([thing])[0];
 
-            this.spawnThing({ ...thing, id });
+            const instantiatedThing = this.instantiateThing(thing);
+            this.spawnThing({ ...instantiatedThing });
         }
     }
 
@@ -392,6 +393,17 @@ class Engine {
                 image.title = JSON.stringify(updatedThing, null, 2);
             }
         });
+    }
+
+    instantiateThing(thing) {
+        const { maxHealth } = THING_TYPES[thing.type];
+        const thingInstance = {
+            ...thing,
+            health: maxHealth
+        };
+
+        const id = store.add([thingInstance])[0];
+        return { id, ...thingInstance };
     }
 
     spawnThing(thing) {

@@ -35,34 +35,50 @@ export const THING_TYPES = {
     townhall: {
         class: BUILDING,
         height: 4,
-        width: 4
+        width: 4,
+        buildTime: 1000,
+        maxHealth: 4000
     },
     farm: {
         class: BUILDING,
         height: 2,
-        width: 2
+        width: 2,
+        buildTime: 1000,
+        maxHealth: 100
     },
     barracks: {
         class: BUILDING,
         height: 3,
-        width: 3
+        width: 3,
+        buildTime: 1000,
+        maxHealth: 700
     },
     peasant: {
         class: UNIT,
         builder: true,
         height: 1,
         width: 1,
-        speed: 150 / 1000
+        speed: 150 / 1000,
+        maxHealth: 50
     },
     catapult: {
         class: UNIT,
         height: 1,
         width: 1,
-        speed: 200 / 1000
+        speed: 200 / 1000,
+        maxHealth: 120
     }
 };
 
-export const THING_PROPERTIES = ['id', 'type', 'owner', 'x', 'y', 'goal'];
+export const THING_PROPERTIES = [
+    'id',
+    'type',
+    'owner',
+    'x',
+    'y',
+    'goal',
+    'health'
+];
 
 export const BUILDING_NAMES = Object.keys(THING_TYPES).filter(
     key => THING_TYPES[key].class === BUILDING
