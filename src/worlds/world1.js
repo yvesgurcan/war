@@ -8,9 +8,16 @@ export default {
         {
             type: 'peasant',
             owner: 0,
-            x: 4,
-            y: 2
+            x: 2,
+            y: 10
         },
+        {
+            type: 'peasant',
+            owner: 0,
+            x: 9,
+            y: 4
+        }
+        /*
         {
             type: 'townhall',
             owner: 0,
@@ -22,8 +29,7 @@ export default {
             owner: 0,
             x: 6,
             y: 10
-        }
-        /*
+        },
         {
             type: 'catapult',
             owner: 0,

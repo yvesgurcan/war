@@ -4,7 +4,6 @@ import {
     PLAYER_VIEW_WIDTH,
     PLAYER_VIEW_HEIGHT,
     WORLD_CLIMATES,
-    RIGHT_CLICK,
     UNIT,
     MAX_FPS,
     BUILDING_NAMES,
@@ -109,23 +108,8 @@ class Engine {
     }
 
     initThings() {
-        const thingsContainer = getElem('things');
         const things = store.getArray(null, { aggregateType: true });
-        things.forEach(thing => {
-            const player = this.players[thing.owner];
-            const image = createElem('img');
-            image.id = thing.id;
-            image.style.position = 'absolute';
-            image.style.width = thing.width * TILE_SIZE + 1;
-            image.style.height = thing.height * TILE_SIZE + 1;
-            image.style.background = player.color;
-            image.style.boxSizing = 'border-box';
-            image.style.border = '1px solid black';
-            image.style.left = thing.x * TILE_SIZE;
-            image.style.top = thing.y * TILE_SIZE;
-            image.title = JSON.stringify(thing, null, 2);
-            thingsContainer.appendChild(image);
-        });
+        things.forEach(thing => this.spawnThing(thing));
     }
 
     /* Menus */
@@ -140,7 +124,7 @@ class Engine {
         buildMenu.style.display = 'none';
     }
 
-    /* Player Interactions */
+    /* Selection */
 
     handleSelectThing(thing) {
         const thingImage = getElem(thing.id);
@@ -165,25 +149,13 @@ class Engine {
         this.hideBuildMenu();
     }
 
-    handleIntent(coordinates, things) {
-        const updatedThings = things.map(thing => ({
-            ...thing,
-            goal: {
-                x: Math.max(
-                    0,
-                    Math.min(this.world.width - thing.width, coordinates.x)
-                ),
-                y: Math.max(
-                    0,
-                    Math.min(this.world.height - thing.height, coordinates.y)
-                )
-            }
-        }));
-
-        store.update(updatedThings);
-    }
+    /* Build */
 
     startBuildPreview(buildingType) {
+        if (this.buildPreview) {
+            this.stopBuildPreview();
+        }
+
         const thing = THING_TYPES[buildingType];
         this.buildPreview = {
             ...thing,
@@ -211,19 +183,55 @@ class Engine {
         buildPreview.parentNode.removeChild(buildPreview);
     }
 
-    handleBuild() {
-        const collides = store.getCollision(this.buildPreview);
-
-        if (!collides) {
-            const player = this.players[this.currentPlayer];
-            const id = store.add([this.buildPreview])[0];
-            const image = getElem('build-preview');
-            image.id = id;
-            image.style.background = player.color;
-            image.style.zIndex = null;
-            image.title = JSON.stringify({ id, ...this.buildPreview }, null, 2);
-            this.buildPreview = null;
+    handleBuildIntent(selected) {
+        const { x, y } = this.buildPreview;
+        if (x !== undefined && y !== undefined) {
+            const collides = store.getCollision(this.buildPreview);
+            if (!collides) {
+                this.handleIntent(
+                    { x, y },
+                    selected,
+                    'build',
+                    this.buildPreview
+                );
+                this.stopBuildPreview();
+            }
         }
+    }
+
+    handleBuild(builder, target) {
+        const collides = store.getCollision(target, builder);
+        if (!collides) {
+            const thing = {
+                ...target,
+                owner: this.currentPlayer
+            };
+            const id = store.add([thing])[0];
+
+            this.spawnThing({ ...thing, id });
+        }
+    }
+
+    /* Mouse Listeners */
+
+    handleIntent(coordinates, things, intent = null, target = null) {
+        const updatedThings = things.map(thing => ({
+            ...thing,
+            goal: {
+                x: Math.max(
+                    0,
+                    Math.min(this.world.width - thing.width, coordinates.x)
+                ),
+                y: Math.max(
+                    0,
+                    Math.min(this.world.height - thing.height, coordinates.y)
+                ),
+                intent: intent,
+                target
+            }
+        }));
+
+        store.update(updatedThings);
     }
 
     listenToMouse() {
@@ -238,18 +246,18 @@ class Engine {
             const coordinates = { x, y };
 
             const selected = store.getSelectionArray({ aggregateThings: true });
+            const selectedIds = selected.map(thing => thing.id);
+            const thingDetails = store.getArray(selectedIds, {
+                aggregateType: true
+            });
 
-            if (!this.buildPreview && BUILDING_NAMES.includes(id)) {
+            if (BUILDING_NAMES.includes(id)) {
                 console.log('start build preview');
                 this.startBuildPreview(id);
             } else if (this.buildPreview) {
-                console.log('build');
-                this.handleBuild();
+                console.log('build intent');
+                this.handleBuildIntent(thingDetails);
             } else if (selected.length > 0 && !target) {
-                const selectedIds = selected.map(thing => thing.id);
-                const thingDetails = store.getArray(selectedIds, {
-                    aggregateType: true
-                });
                 const areUnits = thingDetails.some(
                     thing => thing.class === UNIT
                 );
@@ -353,7 +361,7 @@ class Engine {
     updateThings() {
         const things = store.getArray(null, { aggregateType: true });
         things.forEach(thing => {
-            const { goal, x, y, id, speed } = thing;
+            const { goal, x, y, id } = thing;
             if (goal && (goal.x !== x || goal.y !== y)) {
                 const updatedCoordinates = this.getCloserToGoal(thing, goal);
 
@@ -364,6 +372,15 @@ class Engine {
                 };
 
                 if (updatedCoordinates.done) {
+                    // unit has reached the point where the building should be spawned
+                    if (
+                        goal.intent === 'build' &&
+                        goal.x === updatedThing.x &&
+                        goal.y === updatedThing.y
+                    ) {
+                        this.handleBuild(thing, goal.target);
+                    }
+
                     delete updatedThing.goal;
                 }
 
@@ -372,9 +389,26 @@ class Engine {
                 const image = getElem(id);
                 image.style.left = updatedCoordinates.x * TILE_SIZE;
                 image.style.top = updatedCoordinates.y * TILE_SIZE;
-                image.title = JSON.stringify(thing, null, 2);
+                image.title = JSON.stringify(updatedThing, null, 2);
             }
         });
+    }
+
+    spawnThing(thing) {
+        const thingsContainer = getElem('things');
+        const player = this.players[thing.owner];
+        const image = createElem('img');
+        image.id = thing.id;
+        image.style.position = 'absolute';
+        image.style.width = thing.width * TILE_SIZE + 1;
+        image.style.height = thing.height * TILE_SIZE + 1;
+        image.style.background = player.color;
+        image.style.boxSizing = 'border-box';
+        image.style.border = '1px solid black';
+        image.style.left = thing.x * TILE_SIZE;
+        image.style.top = thing.y * TILE_SIZE;
+        image.title = JSON.stringify({ ...thing }, null, 2);
+        thingsContainer.appendChild(image);
     }
 
     updateBuildPreview(preview) {
@@ -422,7 +456,7 @@ class Engine {
         if (fpsElem) {
             fpsElem.innerHTML = fps;
         } else {
-            // console.log(`fps: ${Number(fps.toFixed(1))}`);
+            console.log(`fps: ${Number(fps.toFixed(1))}`);
         }
     }
 }

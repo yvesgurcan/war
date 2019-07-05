@@ -71,14 +71,14 @@ class Store {
         return match;
     }
 
-    getCollision(source) {
+    getCollision(source, exception = {}) {
         const snappedX = Math.floor(source.x);
         const snappedY = Math.floor(source.y);
 
         const blocked = this.getArray(null, {
             aggregateType: true
         }).some(thing => {
-            if (thing.id === source.id) {
+            if (thing.id === (source.id || exception.id)) {
                 return false;
             }
             const thingSnappedX = Math.floor(thing.x);
@@ -163,10 +163,10 @@ class Store {
         things.forEach(thing => {
             let id = uuid();
             ids.push(id);
-            thingMap[id] = {
+            thingMap[id] = this.sanitizeThing({
                 id,
                 ...thing
-            };
+            });
         });
 
         this.items = {

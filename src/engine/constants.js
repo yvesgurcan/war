@@ -67,5 +67,3 @@ export const THING_PROPERTIES = ['id', 'type', 'owner', 'x', 'y', 'goal'];
 export const BUILDING_NAMES = Object.keys(THING_TYPES).filter(
     key => THING_TYPES[key].class === BUILDING
 );
-
-export const RIGHT_CLICK = 3;
