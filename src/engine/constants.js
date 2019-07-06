@@ -37,24 +37,24 @@ export const THING_TYPES = {
         class: BUILDING,
         height: 4,
         width: 4,
-        buildTime: 1000,
-        maxHealth: 4000
+        buildTime: 255000,
+        maxHealth: 1200
     },
     farm: {
         displayName: 'Farm',
         class: BUILDING,
         height: 2,
         width: 2,
-        buildTime: 1000,
-        maxHealth: 100
+        buildTime: 100000,
+        maxHealth: 400
     },
     barracks: {
         displayName: 'Barracks',
         class: BUILDING,
         height: 3,
         width: 3,
-        buildTime: 1000,
-        maxHealth: 700
+        buildTime: 200000,
+        maxHealth: 800
     },
     peasant: {
         displayName: 'Peasant',
@@ -82,7 +82,9 @@ export const THING_PROPERTIES = [
     'x',
     'y',
     'goal',
-    'health'
+    'health',
+    'timeToBuild',
+    'thingsHosted'
 ];
 
 export const BUILDING_NAMES = Object.keys(THING_TYPES).filter(

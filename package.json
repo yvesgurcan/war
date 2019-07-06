@@ -1,6 +1,6 @@
 {
     "name": "war",
-    "version": "0.0.9",
+    "version": "0.0.10",
     "description": "RTS in JS",
     "scripts": {
         "start": "concurrently \"npm run start:server\" \"npm run start:client\"",

@@ -91,6 +91,7 @@ class Engine {
 
     initMenu() {
         this.hideBuildMenu();
+        this.hideThingDescription();
     }
 
     initPlayers() {
@@ -121,9 +122,28 @@ class Engine {
         buildMenu.style.display = 'none';
     }
 
+    showThingDescription() {
+        const thingDescription = getElem('thing-description');
+        thingDescription.style.display = 'block';
+    }
+
+    hideThingDescription() {
+        const thingDescription = getElem('thing-description');
+        thingDescription.style.display = 'none';
+    }
+
     updateThingDescription(thing) {
-        const thingName = getElem('thing-name');
-        thingName.innerHTML = thing ? thing.displayName : null;
+        if (!thing) {
+            this.hideThingDescription();
+        } else {
+            this.showThingDescription();
+            const thingName = getElem('thing-name');
+            thingName.innerHTML = thing.displayName;
+            const thingHealth = getElem('thing-health');
+            thingHealth.innerHTML = thing.health;
+            const thingMaxHealth = getElem('thing-maxhealth');
+            thingMaxHealth.innerHTML = thing.maxHealth;
+        }
     }
 
     /* Selection */
@@ -204,7 +224,8 @@ class Engine {
         }
     }
 
-    handleBuild(builder, target) {
+    handleBuild(thing, target) {
+        const builder = store.sanitizeThing(thing);
         const collides = store.getCollision(target, builder);
         if (!collides) {
             const thing = {
@@ -213,8 +234,15 @@ class Engine {
                 thingsHosted: [{ ...builder }]
             };
 
-            const instantiatedThing = this.instantiateThing(thing);
-            this.spawnThing({ ...instantiatedThing });
+            const instantiatedThing = this.instantiateThing(thing, {
+                startBuild: true
+            });
+            this.spawnThing(
+                { ...instantiatedThing },
+                {
+                    startBuild: true
+                }
+            );
             this.hideThing(builder);
         }
     }
@@ -369,18 +397,19 @@ class Engine {
 
     /* Game Loop */
 
-    instantiateThing(thing) {
-        const { maxHealth } = THING_TYPES[thing.type];
+    instantiateThing(thing, { startBuild = false } = {}) {
+        const { maxHealth, buildTime } = THING_TYPES[thing.type];
         const thingInstance = {
             ...thing,
-            health: maxHealth
+            health: startBuild ? 0 : maxHealth,
+            ...(startBuild && { timeToBuild: buildTime })
         };
 
         const id = store.add([thingInstance])[0];
         return { id, ...thingInstance };
     }
 
-    spawnThing(thing) {
+    spawnThing(thing, { startBuild = false } = {}) {
         const thingsContainer = getElem('things');
         const player = this.players[thing.owner];
         const image = createElem('img');
@@ -394,6 +423,11 @@ class Engine {
         image.style.left = thing.x * TILE_SIZE;
         image.style.top = thing.y * TILE_SIZE;
         image.title = JSON.stringify({ ...thing }, null, 2);
+
+        if (startBuild) {
+            image.style.opacity = 0.5;
+        }
+
         thingsContainer.appendChild(image);
     }
 
@@ -417,10 +451,11 @@ class Engine {
                         goal.x === updatedThing.x &&
                         goal.y === updatedThing.y
                     ) {
-                        this.handleBuild(thing, goal.target);
+                        delete updatedThing.goal;
+                        this.handleBuild(updatedThing, goal.target);
+                    } else {
+                        delete updatedThing.goal;
                     }
-
-                    delete updatedThing.goal;
                 }
 
                 store.update([updatedThing], { replace: true });
@@ -428,7 +463,44 @@ class Engine {
                 const image = getElem(id);
                 image.style.left = updatedCoordinates.x * TILE_SIZE;
                 image.style.top = updatedCoordinates.y * TILE_SIZE;
-                image.title = JSON.stringify(updatedThing, null, 2);
+            }
+
+            if (thing.timeToBuild > 0) {
+                const timeToBuild = thing.timeToBuild - this.timeDelta;
+                const health = Math.min(
+                    thing.maxHealth,
+                    Math.floor(
+                        thing.maxHealth *
+                            ((timeToBuild / thing.buildTime) * -1 + 1)
+                    )
+                );
+
+                const updatedThing = {
+                    ...thing,
+                    health,
+                    timeToBuild
+                };
+
+                store.update([updatedThing]);
+                const image = getElem(id);
+                image.style.opacity =
+                    0.5 +
+                    (updatedThing.buildTime - updatedThing.timeToBuild) /
+                        updatedThing.buildTime /
+                        2;
+
+                const selected = store.getSelectionArray();
+                const isSelected = selected.find(
+                    thing => thing.id === updatedThing.id
+                );
+                if (isSelected) {
+                    this.updateThingDescription(updatedThing);
+                }
+            } else if (thing.timeToBuild <= 0) {
+                delete thing.timeToBuild;
+                const image = getElem(id);
+                image.title = JSON.stringify(thing, null, 2);
+                store.update([thing], { replace: true });
             }
         });
     }
@@ -470,13 +542,14 @@ class Engine {
 
         // time since last game logic
         const timeDelta = now - this.lastCycle;
+        this.timeDelta = timeDelta;
 
         let cycleDelay = MAX_FPS;
         if (timeDelta > cycleDelay) {
             cycleDelay = Math.max(1, cycleDelay - (timeDelta - cycleDelay));
         }
 
-        this.showFPS(timeDelta);
+        this.showFPS();
         this.lastCycle = now;
 
         setTimeout(() => this.gameLoop(), cycleDelay);
@@ -484,8 +557,8 @@ class Engine {
 
     /* Debug */
 
-    showFPS(timeDelta) {
-        const fps = (1000 / timeDelta).toFixed(0);
+    showFPS() {
+        const fps = (1000 / this.timeDelta).toFixed(0);
         const fpsElem = getElem('fps');
         if (fpsElem) {
             fpsElem.innerHTML = fps;
