@@ -90,10 +90,6 @@ class Engine {
     }
 
     initMenu() {
-        const thingDescrition = getElem('thing-description');
-        thingDescrition.style.display = 'none';
-        const actionMenu = getElem('action-menu');
-        actionMenu.style.display = 'none';
         this.hideBuildMenu();
     }
 
@@ -125,6 +121,11 @@ class Engine {
         buildMenu.style.display = 'none';
     }
 
+    updateThingDescription(thing) {
+        const thingName = getElem('thing-name');
+        thingName.innerHTML = thing ? thing.displayName : null;
+    }
+
     /* Selection */
 
     handleSelectThing(thing) {
@@ -134,6 +135,8 @@ class Engine {
         store.select([thing.id]);
         thingImage.style.border = '1px solid rgb(0, 200, 0)';
         thingImage.style.zIndex = 100;
+
+        this.updateThingDescription(thing);
         if (thing.builder) {
             this.showBuildMenu();
         }
@@ -148,6 +151,7 @@ class Engine {
         });
         store.unselect();
         this.hideBuildMenu();
+        this.updateThingDescription();
     }
 
     /* Build */
@@ -205,11 +209,13 @@ class Engine {
         if (!collides) {
             const thing = {
                 ...target,
-                owner: this.currentPlayer
+                owner: this.currentPlayer,
+                thingsHosted: [{ ...builder }]
             };
 
             const instantiatedThing = this.instantiateThing(thing);
             this.spawnThing({ ...instantiatedThing });
+            this.hideThing(builder);
         }
     }
 
@@ -259,6 +265,10 @@ class Engine {
                 console.log('build intent');
                 this.handleBuildIntent(thingDetails);
             } else if (selected.length > 0 && !target) {
+                if (id !== 'grid') {
+                    console.log('out of bounds');
+                    return;
+                }
                 const areUnits = thingDetails.some(
                     thing => thing.class === UNIT
                 );
@@ -359,6 +369,34 @@ class Engine {
 
     /* Game Loop */
 
+    instantiateThing(thing) {
+        const { maxHealth } = THING_TYPES[thing.type];
+        const thingInstance = {
+            ...thing,
+            health: maxHealth
+        };
+
+        const id = store.add([thingInstance])[0];
+        return { id, ...thingInstance };
+    }
+
+    spawnThing(thing) {
+        const thingsContainer = getElem('things');
+        const player = this.players[thing.owner];
+        const image = createElem('img');
+        image.id = thing.id;
+        image.style.position = 'absolute';
+        image.style.width = thing.width * TILE_SIZE + 1;
+        image.style.height = thing.height * TILE_SIZE + 1;
+        image.style.background = player.color;
+        image.style.boxSizing = 'border-box';
+        image.style.border = '1px solid black';
+        image.style.left = thing.x * TILE_SIZE;
+        image.style.top = thing.y * TILE_SIZE;
+        image.title = JSON.stringify({ ...thing }, null, 2);
+        thingsContainer.appendChild(image);
+    }
+
     updateThings() {
         const things = store.getArray(null, { aggregateType: true });
         things.forEach(thing => {
@@ -395,32 +433,14 @@ class Engine {
         });
     }
 
-    instantiateThing(thing) {
-        const { maxHealth } = THING_TYPES[thing.type];
-        const thingInstance = {
-            ...thing,
-            health: maxHealth
-        };
-
-        const id = store.add([thingInstance])[0];
-        return { id, ...thingInstance };
+    hideThing(thing) {
+        const image = getElem(thing.id);
+        image.style.display = 'none';
     }
 
-    spawnThing(thing) {
-        const thingsContainer = getElem('things');
-        const player = this.players[thing.owner];
-        const image = createElem('img');
-        image.id = thing.id;
-        image.style.position = 'absolute';
-        image.style.width = thing.width * TILE_SIZE + 1;
-        image.style.height = thing.height * TILE_SIZE + 1;
-        image.style.background = player.color;
-        image.style.boxSizing = 'border-box';
-        image.style.border = '1px solid black';
-        image.style.left = thing.x * TILE_SIZE;
-        image.style.top = thing.y * TILE_SIZE;
-        image.title = JSON.stringify({ ...thing }, null, 2);
-        thingsContainer.appendChild(image);
+    showThing(thing) {
+        const image = getElem(thing.id);
+        image.style.display = 'block';
     }
 
     updateBuildPreview(preview) {
@@ -461,6 +481,8 @@ class Engine {
 
         setTimeout(() => this.gameLoop(), cycleDelay);
     }
+
+    /* Debug */
 
     showFPS(timeDelta) {
         const fps = (1000 / timeDelta).toFixed(0);

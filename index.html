@@ -8,19 +8,40 @@
                 background: black;
                 color: white;
                 user-select: none;
+                cursor: pointer;
             }
             canvas {
                 position: fixed;
             }
-            #actionmenu {
+            img {
+                text-indent: -10000px;
+            }
+
+            #in-game-menu {
                 width: 448px;
                 height: 100px;
                 background: rgb(40, 40, 40);
+                border: 3px solid rgb(60, 60, 60);
+                box-sizing: border-box;
                 position: fixed;
                 top: 448px;
+                display: flex;
+                justify-content: space-between;
             }
-            img {
-                text-indent: -10000px;
+            #thing-description {
+                width: 100px;
+                height: 100%;
+                padding: 5px;
+            }
+            #action-menu {
+                width: 200px;
+                height: 100%;
+                padding: 5px; 
+            }
+            #build-menu {
+                width: 150px;
+                height: 100%;
+                padding: 5px;
             }
             #fps {
                 color: white;
@@ -34,8 +55,10 @@
         <canvas id="world"></canvas>
         <canvas id="grid"></canvas>
         <div id="things"></div>
-        <div id="actionmenu">
-            <div id="thing-description"></div>
+        <div id="in-game-menu">
+            <div id="thing-description">
+                <div id="thing-name"></div>
+            </div>
             <div id="action-menu"></div>
             <div id="build-menu">
                 <div id="farm">farm</div>
@@ -44,5 +67,5 @@
             </div>
         </div>
         <div id="fps"></div>
-    <script type="text/javascript" src="main.2377117d9ef675100a37.js"></script></body>
+    <script type="text/javascript" src="main.18b2c5fc5372c85c66a5.js"></script></body>
 </html>

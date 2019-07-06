@@ -16,14 +16,14 @@ export default {
             owner: 0,
             x: 9,
             y: 4
-        }
-        /*
+        },
         {
             type: 'townhall',
             owner: 0,
             x: 3,
             y: 6
-        },
+        }
+        /*
         {
             type: 'farm',
             owner: 0,

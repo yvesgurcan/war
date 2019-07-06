@@ -33,6 +33,7 @@ export const WORLD_CLIMATES = {
 
 export const THING_TYPES = {
     townhall: {
+        displayName: 'Town Hall',
         class: BUILDING,
         height: 4,
         width: 4,
@@ -40,6 +41,7 @@ export const THING_TYPES = {
         maxHealth: 4000
     },
     farm: {
+        displayName: 'Farm',
         class: BUILDING,
         height: 2,
         width: 2,
@@ -47,6 +49,7 @@ export const THING_TYPES = {
         maxHealth: 100
     },
     barracks: {
+        displayName: 'Barracks',
         class: BUILDING,
         height: 3,
         width: 3,
@@ -54,6 +57,7 @@ export const THING_TYPES = {
         maxHealth: 700
     },
     peasant: {
+        displayName: 'Peasant',
         class: UNIT,
         builder: true,
         height: 1,
@@ -62,6 +66,7 @@ export const THING_TYPES = {
         maxHealth: 50
     },
     catapult: {
+        displayName: 'Catapult',
         class: UNIT,
         height: 1,
         width: 1,
