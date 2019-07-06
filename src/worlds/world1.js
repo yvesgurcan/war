@@ -8,9 +8,58 @@ export default {
         {
             type: 'peasant',
             owner: 0,
+            x: 3,
+            y: 9
+        },
+        {
+            type: 'farm',
+            owner: 0,
             x: 2,
             y: 10
         },
+        {
+            type: 'farm',
+            owner: 0,
+            x: 2,
+            y: 12
+        },
+        {
+            type: 'farm',
+            owner: 0,
+            x: 6,
+            y: 12
+        },
+        {
+            type: 'farm',
+            owner: 0,
+            x: 4,
+            y: 12
+        },
+        {
+            type: 'farm',
+            owner: 0,
+            x: 6,
+            y: 10
+        },
+        {
+            type: 'farm',
+            owner: 0,
+            x: 10,
+            y: 12
+        },
+        {
+            type: 'farm',
+            owner: 0,
+            x: 6,
+            y: 8
+        },
+        {
+            type: 'farm',
+            owner: 0,
+            x: 4,
+            y: 8
+        }
+        /*
         {
             type: 'peasant',
             owner: 0,
@@ -22,13 +71,6 @@ export default {
             owner: 0,
             x: 3,
             y: 6
-        }
-        /*
-        {
-            type: 'farm',
-            owner: 0,
-            x: 6,
-            y: 10
         },
         {
             type: 'catapult',

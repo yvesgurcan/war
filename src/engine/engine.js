@@ -10,9 +10,10 @@ import {
     THING_TYPES
 } from './constants';
 import { getElem, createElem } from './utils';
-
 import store from './store';
 import world from '../worlds/world1';
+
+let instaBuild = true;
 
 let instance = null;
 
@@ -148,7 +149,7 @@ class Engine {
 
     /* Selection */
 
-    handleSelectThing(thing) {
+    selectThing(thing) {
         const thingImage = getElem(thing.id);
         console.log('select');
         this.unselectAllThings();
@@ -162,12 +163,25 @@ class Engine {
         }
     }
 
+    unselectThing(thing) {
+        const thingImage = getElem(thing.id);
+        if (thingImage) {
+            thingImage.style.border = '1px solid black';
+            thingImage.style.zIndex = 90;
+        }
+        store.unselect([thing.id]);
+        this.hideBuildMenu();
+        this.updateThingDescription();
+    }
+
     unselectAllThings() {
         const selected = store.getSelectionArray();
         selected.forEach(thing => {
             const thingImage = getElem(thing.id);
-            thingImage.style.border = '1px solid black';
-            thingImage.style.zIndex = 90;
+            if (thingImage) {
+                thingImage.style.border = '1px solid black';
+                thingImage.style.zIndex = 90;
+            }
         });
         store.unselect();
         this.hideBuildMenu();
@@ -231,7 +245,7 @@ class Engine {
             const thing = {
                 ...target,
                 owner: this.currentPlayer,
-                thingsHosted: [{ ...builder }]
+                thingsHosted: [builder.id]
             };
 
             const instantiatedThing = this.instantiateThing(thing, {
@@ -243,8 +257,139 @@ class Engine {
                     startBuild: true
                 }
             );
-            this.hideThing(builder);
+            this.destroyThing(builder);
         }
+    }
+
+    handleBuildFinished(thing) {
+        delete thing.timeToBuild;
+        const { thingsHosted } = thing;
+
+        if (thingsHosted) {
+            thingsHosted.map(hostedThingId => {
+                const builder = store.getById(hostedThingId, {
+                    aggregateType: true
+                });
+                const { x, y, failed } = this.findNextSpotAvailable(
+                    thing,
+                    builder
+                );
+                if (!failed) {
+                    const updatedBuilder = {
+                        ...builder,
+                        x,
+                        y
+                    };
+
+                    store.update([updatedBuilder]);
+                    this.spawnThing(updatedBuilder);
+                } else {
+                    console.warn(
+                        `Thing '${builder.id}' of type '${
+                            builder.type
+                        }' was removed from the world.`
+                    );
+                    store.remove([builder]);
+                }
+            });
+        }
+
+        const image = getElem(thing.id);
+        image.title = JSON.stringify(thing, null, 2);
+        store.update([thing], { replace: true });
+    }
+
+    findNextSpotAvailable(source, thingToSpawn) {
+        let spotFound = false;
+
+        let maxAttempts;
+        let attempts;
+
+        let projection = {
+            width: thingToSpawn.width,
+            height: thingToSpawn.height
+        };
+
+        // left
+        maxAttempts = source.height;
+        attempts = 0;
+        while (!spotFound && attempts <= maxAttempts) {
+            projection = {
+                ...projection,
+                x: source.x - 1,
+                y: source.y + attempts
+            };
+
+            // stay within the world boundaries
+            if (projection.x >= 0 && projection.y < this.world.height) {
+                spotFound = !store.getCollision(projection);
+            }
+            attempts++;
+        }
+
+        // bottom
+        maxAttempts = source.width;
+        attempts = 0;
+        while (!spotFound && attempts <= maxAttempts) {
+            projection = {
+                ...projection,
+                x: source.x + attempts,
+                y: source.y + source.height
+            };
+
+            // stay within the world boundaries
+            if (projection.y < this.world.height) {
+                spotFound = !store.getCollision(projection);
+            }
+            attempts++;
+        }
+
+        // right
+        maxAttempts = source.height;
+        attempts = 0;
+        while (!spotFound && attempts <= maxAttempts) {
+            projection = {
+                ...projection,
+                x: source.x + source.width,
+                y: source.y + source.height - 1 - attempts
+            };
+
+            // stay within the world boundaries
+            if (projection.x < this.world.width) {
+                spotFound = !store.getCollision(projection);
+            }
+            attempts++;
+        }
+
+        // top
+        maxAttempts = source.width;
+        attempts = 0;
+        while (!spotFound && attempts <= maxAttempts) {
+            projection = {
+                ...projection,
+                x: source.x + source.width - 1 - attempts,
+                y: source.y - 1
+            };
+
+            // stay within the world boundaries
+            if (projection.x >= 0 && projection.y >= 0) {
+                spotFound = !store.getCollision(projection);
+            }
+            attempts++;
+        }
+
+        if (!spotFound) {
+            console.warn(
+                `Could not find an adjacent spot to spawn '${
+                    thingToSpawn.id
+                }' from '${source.id}'.`
+            );
+            return { failed: true };
+        }
+
+        console.log(`found a spot for '${thingToSpawn.id}'`, { ...projection });
+
+        return { ...projection };
     }
 
     /* Mouse Listeners */
@@ -308,7 +453,7 @@ class Engine {
                     this.unselectAllThings();
                 }
             } else if (target) {
-                this.handleSelectThing(target);
+                this.selectThing(target);
             } else {
                 console.log('nothing');
             }
@@ -431,6 +576,15 @@ class Engine {
         thingsContainer.appendChild(image);
     }
 
+    destroyThing(thing) {
+        const isSelected = store.isSelected(thing);
+        if (isSelected) {
+            this.unselectThing(thing);
+        }
+        const image = getElem(thing.id);
+        image.parentNode.removeChild(image);
+    }
+
     updateThings() {
         const things = store.getArray(null, { aggregateType: true });
         things.forEach(thing => {
@@ -461,19 +615,25 @@ class Engine {
                 store.update([updatedThing], { replace: true });
 
                 const image = getElem(id);
-                image.style.left = updatedCoordinates.x * TILE_SIZE;
-                image.style.top = updatedCoordinates.y * TILE_SIZE;
+                if (image) {
+                    image.style.left = updatedCoordinates.x * TILE_SIZE;
+                    image.style.top = updatedCoordinates.y * TILE_SIZE;
+                }
             }
 
             if (thing.timeToBuild > 0) {
-                const timeToBuild = thing.timeToBuild - this.timeDelta;
-                const health = Math.min(
-                    thing.maxHealth,
-                    Math.floor(
-                        thing.maxHealth *
-                            ((timeToBuild / thing.buildTime) * -1 + 1)
-                    )
-                );
+                const timeToBuild = instaBuild
+                    ? 0
+                    : thing.timeToBuild - this.timeDelta;
+                const health = instaBuild
+                    ? thing.maxHealth
+                    : Math.min(
+                          thing.maxHealth,
+                          Math.floor(
+                              thing.maxHealth *
+                                  ((timeToBuild / thing.buildTime) * -1 + 1)
+                          )
+                      );
 
                 const updatedThing = {
                     ...thing,
@@ -489,30 +649,14 @@ class Engine {
                         updatedThing.buildTime /
                         2;
 
-                const selected = store.getSelectionArray();
-                const isSelected = selected.find(
-                    thing => thing.id === updatedThing.id
-                );
+                const isSelected = store.isSelected(updatedThing);
                 if (isSelected) {
                     this.updateThingDescription(updatedThing);
                 }
             } else if (thing.timeToBuild <= 0) {
-                delete thing.timeToBuild;
-                const image = getElem(id);
-                image.title = JSON.stringify(thing, null, 2);
-                store.update([thing], { replace: true });
+                this.handleBuildFinished(thing);
             }
         });
-    }
-
-    hideThing(thing) {
-        const image = getElem(thing.id);
-        image.style.display = 'none';
-    }
-
-    showThing(thing) {
-        const image = getElem(thing.id);
-        image.style.display = 'block';
     }
 
     updateBuildPreview(preview) {

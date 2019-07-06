@@ -14,6 +14,8 @@ class Store {
         return instance;
     }
 
+    /* Get */
+
     getArray(ids = null, { aggregateType = false } = {}) {
         let things = [];
         if (!ids) {
@@ -70,6 +72,46 @@ class Store {
 
         return match;
     }
+
+    /* Selection */
+
+    getSelectionArray({ aggregateThings = false } = {}) {
+        let selected = Object.keys(this.selected).map(id => this.selected[id]);
+
+        if (aggregateThings) {
+            selected.map(thing => ({
+                ...this.items[thing.id]
+            }));
+        }
+
+        return selected;
+    }
+
+    isSelected(thing) {
+        const selected = store.getSelectionArray();
+        return selected.find(selectedThing => selectedThing.id === thing.id);
+    }
+
+    select(ids) {
+        ids.forEach(id => {
+            this.selected[id] = {
+                id
+            };
+        });
+    }
+
+    unselect(ids = null) {
+        if (!ids) {
+            this.selected = {};
+            return;
+        }
+
+        ids.forEach(id => {
+            delete this.selected[id];
+        });
+    }
+
+    /* Collision */
 
     getCollision(source, exception = {}) {
         const snappedX = Math.floor(source.x);
@@ -145,17 +187,7 @@ class Store {
         return blocked;
     }
 
-    getSelectionArray({ aggregateThings = false } = {}) {
-        let selected = Object.keys(this.selected).map(id => this.selected[id]);
-
-        if (aggregateThings) {
-            selected.map(thing => ({
-                ...this.items[thing.id]
-            }));
-        }
-
-        return selected;
-    }
+    /* Add, Update, Delete */
 
     add(things) {
         let thingMap = {};
@@ -189,30 +221,13 @@ class Store {
         });
     }
 
-    remove(ids) {
-        ids.forEach(id => {
-            delete this.items[id];
+    remove(things) {
+        things.forEach(thing => {
+            delete this.items[thing.id];
         });
     }
 
-    select(ids) {
-        ids.forEach(id => {
-            this.selected[id] = {
-                id
-            };
-        });
-    }
-
-    unselect(ids = null) {
-        if (!ids) {
-            this.selected = {};
-            return;
-        }
-
-        ids.forEach(id => {
-            delete this.selected[id];
-        });
-    }
+    /* Utils */
 
     sanitizeThing(thingWithExtraProperties) {
         let strippedThing = {};
