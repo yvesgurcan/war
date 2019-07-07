@@ -1,5 +1,5 @@
 import uuid from 'uuid';
-import { THING_TYPES, THING_PROPERTIES } from './constants';
+import { THING_TYPES, THING_PROPERTIES, UNIT, BUILDING } from './constants';
 
 let instance = null;
 
@@ -71,6 +71,18 @@ class Store {
         }
 
         return match;
+    }
+
+    getUnitsByPlayer(playerIndex) {
+        return this.getArray(null, { aggregateType: true }).filter(
+            thing => thing.class === UNIT && thing.owner === playerIndex
+        );
+    }
+
+    getBuildingsByPlayer(playerIndex) {
+        return this.getArray(null, { aggregateType: true }).filter(
+            thing => thing.class === BUILDING && thing.owner === playerIndex
+        );
     }
 
     /* Selection */

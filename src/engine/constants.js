@@ -38,7 +38,10 @@ export const THING_TYPES = {
         height: 4,
         width: 4,
         buildTime: 255000,
-        maxHealth: 1200
+        maxHealth: 1200,
+        foodProduction: 1,
+        gold: 1000,
+        lumber: 600
     },
     farm: {
         displayName: 'Farm',
@@ -46,7 +49,10 @@ export const THING_TYPES = {
         height: 2,
         width: 2,
         buildTime: 100000,
-        maxHealth: 400
+        maxHealth: 400,
+        foodProduction: 4,
+        gold: 500,
+        lumber: 100
     },
     barracks: {
         displayName: 'Barracks',
@@ -54,7 +60,10 @@ export const THING_TYPES = {
         height: 3,
         width: 3,
         buildTime: 200000,
-        maxHealth: 800
+        maxHealth: 800,
+        gold: 300,
+        lumber: 400,
+        oil: 50
     },
     peasant: {
         displayName: 'Peasant',
@@ -63,7 +72,8 @@ export const THING_TYPES = {
         height: 1,
         width: 1,
         speed: 150 / 1000,
-        maxHealth: 50
+        maxHealth: 50,
+        food: 1
     },
     catapult: {
         displayName: 'Catapult',
@@ -71,7 +81,8 @@ export const THING_TYPES = {
         height: 1,
         width: 1,
         speed: 200 / 1000,
-        maxHealth: 120
+        maxHealth: 120,
+        food: 1
     }
 };
 

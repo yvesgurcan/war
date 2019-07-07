@@ -21,12 +21,18 @@ let players = [
     {
         id: uuid(),
         color: 'rgb(180, 0, 0)',
-        race: 'human'
+        race: 'human',
+        gold: 1000,
+        lumber: 1000,
+        oil: 1000
     },
     {
         id: uuid(),
         color: 'rgb(0, 0, 180)',
-        race: 'human'
+        race: 'human',
+        gold: 5000,
+        lumber: 2000,
+        oil: 1000
     }
 ];
 
@@ -43,6 +49,7 @@ class Engine {
         this.initMenu();
         this.initPlayers();
         this.initThings();
+        this.initResources();
         this.listenToMouse();
         this.gameLoop();
     }
@@ -109,6 +116,109 @@ class Engine {
             const thingInstance = this.instantiateThing(thing);
             this.spawnThing({ ...thingWithType, ...thingInstance });
         });
+    }
+
+    initResources() {
+        this.players.forEach((player, playerIndex) => {
+            const food = store
+                .getUnitsByPlayer(playerIndex)
+                .map(unit => unit.food || 0)
+                .reduce((sum, value) => sum + value, 0);
+
+            const foodProduction = store
+                .getBuildingsByPlayer(playerIndex)
+                .map(unit => unit.foodProduction || 0)
+                .reduce((sum, value) => sum + value, 0);
+
+            this.updateResources(playerIndex, { food, foodProduction });
+        });
+    }
+
+    /* Resources */
+
+    updateResources(
+        playerIndex,
+        {
+            gold: gDelta = 0,
+            lumber: lDelta = 0,
+            oil: oDelta = 0,
+            food: fDelta = 0,
+            foodProduction: fpDelta = 0
+        }
+    ) {
+        const {
+            gold = 0,
+            lumber = 0,
+            oil = 0,
+            food = 0,
+            foodProduction = 0
+        } = this.players[playerIndex];
+        this.players[playerIndex] = {
+            ...this.players[playerIndex],
+            gold: gold + (gDelta || 0),
+            lumber: lumber + (lDelta || 0),
+            oil: oil + (oDelta || 0),
+            food: food + (fDelta || 0),
+            foodProduction: foodProduction + (fpDelta || 0)
+        };
+
+        if (playerIndex === this.currentPlayer) {
+            const { gold, lumber, oil, food, foodProduction } = this.players[
+                playerIndex
+            ];
+            this.updateResourceDisplays({
+                gold,
+                lumber,
+                oil,
+                food,
+                foodProduction
+            });
+        }
+    }
+
+    updateResourceDisplays({ gold, lumber, oil, food, foodProduction }) {
+        const goldElement = getElem('gold');
+        goldElement.innerHTML = gold;
+        const lumberElement = getElem('lumber');
+        lumberElement.innerHTML = lumber;
+        const oilElement = getElem('oil');
+        oilElement.innerHTML = oil;
+        const foodElement = getElem('food-used');
+        foodElement.innerHTML = food;
+        const foodProductionElement = getElem('food-max');
+        foodProductionElement.innerHTML = foodProduction;
+
+        if (
+            Number(foodElement.innerHTML) >
+            Number(foodProductionElement.innerHTML)
+        ) {
+            foodElement.style.color = 'rgb(200, 0, 0)';
+        } else {
+            foodElement.style.color = 'inherit';
+        }
+    }
+
+    canAffordBuild(playerIndex, thing) {
+        const {
+            gold: gDelta,
+            lumber: lDelta,
+            oil: oDelta,
+            food: fDelta
+        } = thing;
+        const { gold, lumber, oil, food, foodProduction } = this.players[
+            playerIndex
+        ];
+
+        if (
+            gold - gDelta < 0 ||
+            lumber - lDelta < 0 ||
+            oil - oDelta < 0 ||
+            (fDelta > 0 && food + (fDelta > foodProduction))
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     /* Menus */
@@ -191,29 +301,33 @@ class Engine {
     /* Build */
 
     startBuildPreview(buildingType) {
-        if (this.buildPreview) {
-            this.stopBuildPreview();
-        }
-
         const thing = THING_TYPES[buildingType];
-        this.buildPreview = {
-            ...thing,
-            type: buildingType,
-            owner: this.currentPlayer
-        };
 
-        const thingsContainer = getElem('things');
-        const image = createElem('img');
-        image.id = 'build-preview';
-        image.src = ''; // should be path to building visual design
-        image.style.position = 'absolute';
-        image.style.width = thing.width * TILE_SIZE + 1;
-        image.style.height = thing.height * TILE_SIZE + 1;
-        image.style.background = 'grey';
-        image.style.boxSizing = 'border-box';
-        image.style.border = '1px solid black';
-        image.style.zIndex = -1; // don't show until the mouse moves on world view
-        thingsContainer.appendChild(image);
+        const canAffordBuild = this.canAffordBuild(this.currentPlayer, thing);
+        if (canAffordBuild) {
+            if (this.buildPreview) {
+                this.stopBuildPreview();
+            }
+
+            this.buildPreview = {
+                ...thing,
+                type: buildingType,
+                owner: this.currentPlayer
+            };
+
+            const thingsContainer = getElem('things');
+            const image = createElem('img');
+            image.id = 'build-preview';
+            image.src = ''; // should be path to building visual design
+            image.style.position = 'absolute';
+            image.style.width = thing.width * TILE_SIZE + 1;
+            image.style.height = thing.height * TILE_SIZE + 1;
+            image.style.background = 'grey';
+            image.style.boxSizing = 'border-box';
+            image.style.border = '1px solid black';
+            image.style.zIndex = -1; // don't show until the mouse moves on world view
+            thingsContainer.appendChild(image);
+        }
     }
 
     stopBuildPreview() {
@@ -227,13 +341,19 @@ class Engine {
         if (x !== undefined && y !== undefined) {
             const collides = store.getCollision(this.buildPreview);
             if (!collides) {
-                this.handleIntent(
-                    { x, y },
-                    selected,
-                    'build',
+                const canAffordBuild = this.canAffordBuild(
+                    this.currentPlayer,
                     this.buildPreview
                 );
-                this.stopBuildPreview();
+                if (canAffordBuild) {
+                    this.handleIntent(
+                        { x, y },
+                        selected,
+                        'build',
+                        this.buildPreview
+                    );
+                    this.stopBuildPreview();
+                }
             }
         }
     }
@@ -242,28 +362,42 @@ class Engine {
         const builder = store.sanitizeThing(thing);
         const collides = store.getCollision(target, builder);
         if (!collides) {
-            const thing = {
-                ...target,
-                owner: this.currentPlayer,
-                thingsHosted: [builder.id]
-            };
-
-            const instantiatedThing = this.instantiateThing(thing, {
-                startBuild: true
-            });
-            this.spawnThing(
-                { ...instantiatedThing },
-                {
-                    startBuild: true
-                }
+            const canAffordBuild = this.canAffordBuild(
+                this.currentPlayer,
+                target
             );
-            this.destroyThing(builder);
+            if (canAffordBuild) {
+                const thing = {
+                    ...target,
+                    owner: this.currentPlayer,
+                    thingsHosted: [builder.id]
+                };
+
+                const instantiatedThing = this.instantiateThing(thing, {
+                    startBuild: true
+                });
+                this.spawnThing(
+                    { ...instantiatedThing },
+                    {
+                        startBuild: true
+                    }
+                );
+
+                const { gold, lumber, oil } = instantiatedThing;
+                this.updateResources(this.currentPlayer, {
+                    gold: -gold,
+                    lumber: -lumber,
+                    oil: -oil
+                });
+
+                this.destroyThing(builder);
+            }
         }
     }
 
     handleBuildFinished(thing) {
         delete thing.timeToBuild;
-        const { thingsHosted } = thing;
+        const { thingsHosted, foodProduction } = thing;
 
         if (thingsHosted) {
             thingsHosted.map(hostedThingId => {
@@ -292,6 +426,10 @@ class Engine {
                     store.remove([builder]);
                 }
             });
+        }
+
+        if (foodProduction > 0) {
+            this.updateResources(this.currentPlayer, { foodProduction });
         }
 
         const image = getElem(thing.id);

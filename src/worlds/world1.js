@@ -6,90 +6,29 @@ export default {
     },
     things: [
         {
+            type: 'townhall',
+            owner: 0,
+            x: 2,
+            y: 10
+        },
+        {
             type: 'peasant',
             owner: 0,
             x: 3,
             y: 9
         },
         {
-            type: 'farm',
+            type: 'peasant',
             owner: 0,
             x: 2,
-            y: 10
-        },
-        {
-            type: 'farm',
-            owner: 0,
-            x: 2,
-            y: 12
-        },
-        {
-            type: 'farm',
-            owner: 0,
-            x: 6,
-            y: 12
-        },
-        {
-            type: 'farm',
-            owner: 0,
-            x: 4,
-            y: 12
-        },
-        {
-            type: 'farm',
-            owner: 0,
-            x: 6,
-            y: 10
-        },
-        {
-            type: 'farm',
-            owner: 0,
-            x: 10,
-            y: 12
-        },
-        {
-            type: 'farm',
-            owner: 0,
-            x: 6,
-            y: 8
-        },
-        {
-            type: 'farm',
-            owner: 0,
-            x: 4,
-            y: 8
+            y: 6
         }
         /*
         {
-            type: 'peasant',
+            type: 'farm',
             owner: 0,
-            x: 9,
-            y: 4
-        },
-        {
-            type: 'townhall',
-            owner: 0,
-            x: 3,
-            y: 6
-        },
-        {
-            type: 'catapult',
-            owner: 0,
-            x: 12,
-            y: 8
-        },
-        /*
-        {
-            type: 'peasant',
-            owner: 0,
-            x: 6,
-            y: 10
-        },
-        {
-            type: 'peasant',
-            owner: 1,
-            x: 10,
-            y: 9
+            x: 2,
+            y: 1
         }
         */
     ]
