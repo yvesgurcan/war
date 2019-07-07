@@ -418,8 +418,8 @@ class Engine {
         document.onclick = event => {
             const id = event.target.id;
             const rect = event.target.getBoundingClientRect();
-            const x = Math.floor((event.clientX - rect.left) / TILE_SIZE);
-            const y = Math.floor((event.clientY - rect.top) / TILE_SIZE);
+            const x = Math.floor(event.clientX / TILE_SIZE);
+            const y = Math.floor(event.clientY / TILE_SIZE);
             const target = store.getById(id, {
                 aggregateType: true
             });
