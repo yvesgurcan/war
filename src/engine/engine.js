@@ -7,14 +7,19 @@ import {
     UNIT,
     MAX_FPS,
     BUILDING_NAMES,
-    THING_TYPES
+    THING_TYPES,
+    NEW_GAME,
+    INIT_WORLD
 } from './constants';
+
+import socket from '../websocket';
+window.socket = socket.instance;
+
 import { getElem, createElem } from './utils';
 import store from './store';
 import world from '../worlds/world1';
 
 let instaBuild = true;
-
 let instance = null;
 
 let players = [
@@ -44,6 +49,7 @@ class Engine {
 
         instance = this;
 
+        this.initConnection();
         this.initWorld();
         this.initGrid();
         this.initMenu();
@@ -60,6 +66,13 @@ class Engine {
 
     /* Init */
 
+    initConnection() {
+        this.connection = socket;
+        this.connection.connect();
+        this.connection.receive(this.listenToConnection);
+        this.connection.send({ event: NEW_GAME });
+    }
+
     initWorld() {
         const worldCanvas = getElem('world');
         worldCanvas.width = PLAYER_VIEW_WIDTH * TILE_SIZE;
@@ -68,6 +81,11 @@ class Engine {
         this.world = { ...world.metadata };
         worldCanvas.style.backgroundColor =
             WORLD_CLIMATES[world.metadata.climate].grass.color;
+
+        this.connection.send({
+            event: INIT_WORLD,
+            data: { world: this.world }
+        });
     }
 
     initGrid() {
@@ -620,6 +638,15 @@ class Engine {
                 });
             }
         };
+    }
+
+    /* Server Listener */
+
+    listenToConnection(payload) {
+        const { event, data, gameId } = payload;
+        if (gameId && !instance.gameId) {
+            instance.gameId = gameId;
+        }
     }
 
     /* Artificial Intelligence */

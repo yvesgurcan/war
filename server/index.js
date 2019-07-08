@@ -1,76 +1,47 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const winston = require('./logger');
+const WebSocket = require('ws');
 const uuid = require('uuid');
 
-const PORT = 3000;
-const HOST = 'localhost';
+const { CONNECTION, UNKNOWN, NEW_GAME } = require('./constants');
 
-global = {
-    games: {}
+const wss = new WebSocket.Server({ port: 3000 });
+
+const sendJSON = (ws, payload) => {
+    console.log('Sent:', payload);
+    return ws.send(JSON.stringify(payload));
 };
 
-const app = express();
+wss.on('connection', ws => {
+    console.log('---');
+    console.log('Connection opened.');
 
-app.use(bodyParser.json({ extended: false }));
+    let gameId = null;
 
-app.use(winston.expressLogger);
+    ws.on('message', payload => {
+        const { event, data } = JSON.parse(payload);
+        console.log('Received:', { event, data });
 
-app.all('/*', function(req, res, next) {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', '*');
-    next();
-});
+        let response = { event };
 
-app.get(`/game/state/:gameId`, (req, res) => {
-    const { gameId } = req.params;
-    const gameState = global.games[gameId];
-    res.send(gameState);
-});
-
-app.post(`/game/state`, (req, res) => {
-    const { data } = req.body;
-
-    const gameId = uuid();
-
-    global = {
-        games: {
-            ...global.games,
-            [gameId]: {
-                gameId,
-                ...data
+        switch (event) {
+            default: {
+                console.error('Unknown event --', { event, data });
+                sendJSON(ws, { event: UNKNOWN, gameId });
+                return;
+            }
+            case NEW_GAME: {
+                gameId = uuid();
+                response.data = { gameId };
+                break;
             }
         }
-    };
 
-    res.send({ gameId });
+        sendJSON(ws, { ...response, gameId });
+    });
+
+    sendJSON(ws, { event: CONNECTION, data: { success: true } });
+
+    ws.on('close', () => {
+        console.log('Connection closed:', { gameId });
+        console.log('---');
+    });
 });
-
-app.post(`/game/state/:gameId/event`, (req, res) => {
-    const { gameId } = req.params;
-    const { data } = req.body;
-    const gameState = global.games[gameId];
-
-    global = {
-        games: {
-            ...global.games,
-            [gameId]: {
-                gameId,
-                ...gameState,
-                ...data
-            }
-        }
-    };
-
-    res.send(global.games[gameId]);
-});
-
-app.delete(`/game/state/:gameId`, (req, res) => {
-    const { gameId } = req.params;
-    delete global.games[gameId];
-    res.send(global.games[gameId]);
-});
-
-app.listen(PORT, HOST, () =>
-    console.log(`War server listening at ${HOST}:${PORT}.\n`)
-);

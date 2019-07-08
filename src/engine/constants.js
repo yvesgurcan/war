@@ -101,3 +101,7 @@ export const THING_PROPERTIES = [
 export const BUILDING_NAMES = Object.keys(THING_TYPES).filter(
     key => THING_TYPES[key].class === BUILDING
 );
+
+// events
+export const NEW_GAME = 'NEW_GAME';
+export const INIT_WORLD = 'INIT_WORLD';
