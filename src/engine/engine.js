@@ -267,10 +267,23 @@ class Engine {
             this.showThingDescription();
             const thingName = getElem('thing-name');
             thingName.innerHTML = thing.displayName;
-            const thingHealth = getElem('thing-health');
-            thingHealth.innerHTML = thing.health;
-            const thingMaxHealth = getElem('thing-maxhealth');
-            thingMaxHealth.innerHTML = thing.maxHealth;
+            const thingHealthRatio = getElem('thing-health-ratio');
+            if (thing.health === undefined && thing.maxHealth === undefined) {
+                thingHealthRatio.style.display = 'none';
+            } else {
+                thingHealthRatio.style.display = 'block';
+                const thingHealth = getElem('thing-health');
+                thingHealth.innerHTML = thing.health;
+                const thingMaxHealth = getElem('thing-maxhealth');
+                thingMaxHealth.innerHTML = thing.maxHealth;
+            }
+
+            const goldContained = getElem('gold-contained');
+            if (thing.goldContained) {
+                goldContained.innerHTML = thing.goldContained;
+            } else {
+                goldContained.innerHTML = '';
+            }
         }
     }
 

@@ -102,7 +102,8 @@ export const THING_PROPERTIES = [
     'goal',
     'health',
     'timeToBuild',
-    'thingsHosted'
+    'thingsHosted',
+    'goldContained'
 ];
 
 export const BUILDING_NAMES = Object.keys(THING_TYPES).filter(

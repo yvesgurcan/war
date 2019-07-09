@@ -31,7 +31,7 @@ export default {
         },
         {
             type: 'goldmine',
-            owner: null,
+            goldContained: 50000,
             x: 1,
             y: 0
         }
