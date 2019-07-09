@@ -1,9 +1,10 @@
-import { HOST, PORT } from './constants';
+import { ENDPOINT, HOST, PORT, MAX_CONNECTION_ATTEMPTS } from './constants';
 
 let instance = null;
 
 class Socket {
     constructor() {
+        this.connectionAttempts = 0;
         this.gameId = null;
         instance = this;
     }
@@ -14,18 +15,26 @@ class Socket {
 
     connect() {
         // Create WebSocket connection
-        this.socket = new WebSocket(`ws://${HOST}:${PORT}`);
-        this.socket.onopen = () => {
+        this.socket = new WebSocket(ENDPOINT || `ws://${HOST}:${PORT}`);
+        this.socket.onopen = event => {
             console.log('Connection opened.');
         };
     }
 
     send(payload) {
-        if (this.socket.readyState === 0) {
+        if (this.connectionAttempts > MAX_CONNECTION_ATTEMPTS) {
+            console.warn(
+                `Max retry attempts (${
+                    this.connectionAttempts
+                }) reached. Could not connect to server. `
+            );
+        } else if (this.socket.readyState === 0) {
             console.warn('Connection not established yet.');
+            this.connectionAttempts = this.connectionAttempts + 1;
             setTimeout(() => this.send(payload), 1000);
         } else if (this.socket.readyState === 3) {
             console.warn('Connection error. Reconnecting...');
+            this.connectionAttempts = this.connectionAttempts + 1;
             this.disconnect();
             this.connect();
             setTimeout(() => this.send(payload), 1000);
