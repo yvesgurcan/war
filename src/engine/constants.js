@@ -31,13 +31,16 @@ export const WORLD_CLIMATES = {
     }
 };
 
+export const GOLD_MINE = 'goldmine';
+
 export const THING_TYPES = {
     goldmine: {
         displayName: 'Gold Mine',
-        class: BUILDING,
+        class: UNIT,
         height: 3,
         width: 3,
-        color: 'gold'
+        color: 'gold',
+        harvestTime: 500
     },
     townhall: {
         displayName: 'Town Hall',
@@ -80,7 +83,8 @@ export const THING_TYPES = {
         width: 1,
         speed: 150 / 1000,
         maxHealth: 50,
-        food: 1
+        food: 1,
+        harvester: true
     },
     catapult: {
         displayName: 'Catapult',

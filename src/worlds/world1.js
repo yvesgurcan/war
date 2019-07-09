@@ -6,34 +6,22 @@ export default {
     },
     things: [
         {
-            type: 'townhall',
-            owner: 0,
-            x: 2,
-            y: 10
-        },
-        {
             type: 'peasant',
             owner: 0,
             x: 3,
-            y: 8
+            y: 9
         },
         {
             type: 'peasant',
             owner: 0,
-            x: 2,
+            x: 1,
             y: 6
-        },
-        {
-            type: 'farm',
-            owner: 0,
-            x: 5,
-            y: 0
         },
         {
             type: 'goldmine',
             goldContained: 50000,
-            x: 1,
-            y: 0
+            x: 3,
+            y: 5
         }
     ]
 };

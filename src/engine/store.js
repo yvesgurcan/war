@@ -169,9 +169,9 @@ class Store {
         const destinationSnappedY =
             Math.floor(destination.y || source.y) + (down && source.height);
 
-        const blocked = this.getArray(null, {
+        const blocking = this.getArray(null, {
             aggregateType: true
-        }).some(thing => {
+        }).filter(thing => {
             if (thing.id === source.id) {
                 return false;
             }
@@ -196,7 +196,7 @@ class Store {
             return false;
         });
 
-        return blocked;
+        return blocking ? blocking[0] : false;
     }
 
     /* Add, Update, Delete */

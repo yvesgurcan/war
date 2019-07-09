@@ -8,6 +8,7 @@ import {
     MAX_FPS,
     BUILDING_NAMES,
     THING_TYPES,
+    GOLD_MINE,
     NEW_GAME,
     INIT_WORLD
 } from './constants';
@@ -467,6 +468,23 @@ class Engine {
         store.update([thing], { replace: true });
     }
 
+    /* Harvest */
+
+    handleHarvestIntent(harvesters, resource) {
+        const { x, y } = resource;
+        this.handleIntent({ x, y }, harvesters, 'harvest', resource);
+    }
+
+    handleHarvest(thing, target) {
+        const harvester = store.sanitizeThing(thing);
+        const resource = {
+            ...target,
+            thingsHosted: [harvester.id]
+        };
+
+        this.destroyThing(harvester);
+    }
+
     findNextSpotAvailable(source, thingToSpawn) {
         let spotFound = false;
 
@@ -621,7 +639,15 @@ class Engine {
                     this.unselectAllThings();
                 }
             } else if (target) {
-                this.selectThing(target);
+                const harvesters = thingDetails.filter(
+                    thing => thing.harvester
+                );
+                if (harvesters.length > 0 && target.type === GOLD_MINE) {
+                    console.log('harvest');
+                    this.handleHarvestIntent(harvesters, target);
+                } else {
+                    this.selectThing(target);
+                }
             } else {
                 console.log('nothing');
             }
@@ -692,30 +718,40 @@ class Engine {
             destination.y = Math.max(goal.y, source.y - speed);
         }
 
-        const collides = store.getCollisionWhileMoving(
+        const collisionThing = store.getCollisionWhileMoving(
             source,
             destination,
             direction
         );
 
-        // can't go there
-        if (collides) {
+        if (collisionThing) {
             const snapX = direction.right
                 ? Math.ceil(source.x)
                 : Math.floor(source.x);
             const snapY = direction.down
                 ? Math.ceil(source.y)
                 : Math.floor(source.y);
+
+            // reached goal
+            if (collisionThing.id === (goal.target && goal.target.id)) {
+                return {
+                    x: snapX,
+                    y: snapY,
+                    reached: true
+                };
+            }
+
+            // could not find a different itinerary
             return {
                 x: snapX,
                 y: snapY,
-                done: true // could not find a different itinerary
+                interrupted: true
             };
         }
 
         return {
             ...destination,
-            done: destination.x === goal.x && destination.y === goal.y
+            reached: destination.x === goal.x && destination.y === goal.y
         };
     }
 
@@ -781,18 +817,18 @@ class Engine {
                     y: updatedCoordinates.y
                 };
 
-                if (updatedCoordinates.done) {
-                    // unit has reached the point where the building should be spawned
-                    if (
-                        goal.intent === 'build' &&
-                        goal.x === updatedThing.x &&
-                        goal.y === updatedThing.y
-                    ) {
-                        delete updatedThing.goal;
+                if (updatedCoordinates.reached) {
+                    delete updatedThing.goal;
+
+                    if (goal.intent === 'build') {
                         this.handleBuild(updatedThing, goal.target);
-                    } else {
-                        delete updatedThing.goal;
+                    } else if (goal.intent === 'harvest') {
+                        this.handleHarvest(updatedThing, goal.target);
                     }
+                }
+
+                if (updatedCoordinates.interrupted) {
+                    delete updatedThing.goal;
                 }
 
                 store.update([updatedThing], { replace: true });
