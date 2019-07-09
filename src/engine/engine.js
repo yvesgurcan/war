@@ -48,7 +48,6 @@ class Engine {
         this.currentPlayer = 0;
 
         instance = this;
-
         this.initConnection();
         this.initWorld();
         this.initGrid();
@@ -573,9 +572,9 @@ class Engine {
     listenToMouse() {
         document.onclick = event => {
             const id = event.target.id;
-            const rect = event.target.getBoundingClientRect();
-            const x = Math.floor(event.clientX / TILE_SIZE);
-            const y = Math.floor(event.clientY / TILE_SIZE);
+            const { top, left } = event.target.getBoundingClientRect();
+            const x = Math.floor((event.clientX - left) / TILE_SIZE);
+            const y = Math.floor((event.clientY - top) / TILE_SIZE);
             const target = store.getById(id, {
                 aggregateType: true
             });
@@ -628,8 +627,10 @@ class Engine {
 
         document.onmousemove = event => {
             if (this.buildPreview) {
-                const x = Math.floor(event.clientX / TILE_SIZE);
-                const y = Math.floor(event.clientY / TILE_SIZE);
+                const thingsContainer = getElem('things');
+                const { top, left } = thingsContainer.getBoundingClientRect();
+                const x = Math.floor((event.clientX - left) / TILE_SIZE);
+                const y = Math.floor((event.clientY - top) / TILE_SIZE);
 
                 this.updateBuildPreview({
                     ...this.buildPreview,
@@ -721,17 +722,18 @@ class Engine {
 
     spawnThing(thing, { startBuild = false } = {}) {
         const thingsContainer = getElem('things');
+        const { top, left } = thingsContainer.getBoundingClientRect();
         const player = this.players[thing.owner];
         const image = createElem('img');
         image.id = thing.id;
         image.style.position = 'absolute';
         image.style.width = thing.width * TILE_SIZE + 1;
         image.style.height = thing.height * TILE_SIZE + 1;
-        image.style.background = player.color;
+        image.style.background = thing.color || player.color;
         image.style.boxSizing = 'border-box';
         image.style.border = '1px solid black';
-        image.style.left = thing.x * TILE_SIZE;
-        image.style.top = thing.y * TILE_SIZE;
+        image.style.left = thing.x * TILE_SIZE + left;
+        image.style.top = thing.y * TILE_SIZE + top;
         image.title = JSON.stringify({ ...thing }, null, 2);
 
         if (startBuild) {
@@ -751,6 +753,9 @@ class Engine {
     }
 
     updateThings() {
+        const thingsContainer = getElem('things');
+        const { top, left } = thingsContainer.getBoundingClientRect();
+
         const things = store.getArray(null, { aggregateType: true });
         things.forEach(thing => {
             const { goal, x, y, id } = thing;
@@ -781,8 +786,9 @@ class Engine {
 
                 const image = getElem(id);
                 if (image) {
-                    image.style.left = updatedCoordinates.x * TILE_SIZE;
-                    image.style.top = updatedCoordinates.y * TILE_SIZE;
+                    image.style.left = updatedCoordinates.x * TILE_SIZE + left;
+                    image.style.top = updatedCoordinates.y * TILE_SIZE + top;
+                    image.title = JSON.stringify(updatedThing, null, 2);
                 }
             }
 
@@ -834,9 +840,11 @@ class Engine {
             return false;
         }
 
+        const thingsContainer = getElem('things');
+        const { top, left } = thingsContainer.getBoundingClientRect();
         const image = getElem('build-preview');
-        image.style.left = preview.x * TILE_SIZE;
-        image.style.top = preview.y * TILE_SIZE;
+        image.style.left = preview.x * TILE_SIZE + left;
+        image.style.top = preview.y * TILE_SIZE + top;
         if (image.style.zIndex !== 100) {
             image.style.zIndex = 100;
         }

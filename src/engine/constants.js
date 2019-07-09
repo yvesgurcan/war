@@ -32,6 +32,13 @@ export const WORLD_CLIMATES = {
 };
 
 export const THING_TYPES = {
+    goldmine: {
+        displayName: 'Gold Mine',
+        class: BUILDING,
+        height: 3,
+        width: 3,
+        color: 'gold'
+    },
     townhall: {
         displayName: 'Town Hall',
         class: BUILDING,

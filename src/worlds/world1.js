@@ -15,21 +15,25 @@ export default {
             type: 'peasant',
             owner: 0,
             x: 3,
-            y: 9
+            y: 8
         },
         {
             type: 'peasant',
             owner: 0,
             x: 2,
             y: 6
-        }
-        /*
+        },
         {
             type: 'farm',
             owner: 0,
-            x: 2,
-            y: 1
+            x: 5,
+            y: 0
+        },
+        {
+            type: 'goldmine',
+            owner: null,
+            x: 1,
+            y: 0
         }
-        */
     ]
 };
