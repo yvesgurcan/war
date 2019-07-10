@@ -20,7 +20,7 @@ import { getElem, createElem } from './utils';
 import store from './store';
 import world from '../worlds/world1';
 
-let instaBuild = true;
+let instaBuild = false;
 let instance = null;
 
 let players = [
@@ -280,7 +280,7 @@ class Engine {
             }
 
             const goldContained = getElem('gold-contained');
-            if (thing.goldContained) {
+            if (thing.goldContained !== undefined) {
                 goldContained.innerHTML = thing.goldContained;
             } else {
                 goldContained.innerHTML = '';
@@ -475,14 +475,52 @@ class Engine {
         this.handleIntent({ x, y }, harvesters, 'harvest', resource);
     }
 
-    handleHarvest(thing, target) {
-        const harvester = store.sanitizeThing(thing);
+    handleHarvest(harvester, target) {
         const resource = {
             ...target,
             thingsHosted: [harvester.id]
         };
 
+        // update gold mine thing + image (for debug) -- subtract gold harvested and add thing hosted
+
         this.destroyThing(harvester);
+
+        setTimeout(
+            () => this.handleHarvestFinished(harvester, resource),
+            resource.harvestTime
+        );
+    }
+
+    handleHarvestFinished(harvester, source) {
+        const { thingsHosted } = source;
+
+        const { x, y, failed } = this.findNextSpotAvailable(source, harvester);
+        if (!failed) {
+            const updatedHarvester = {
+                ...harvester,
+                x,
+                y
+                // harvester should be flagged as carrying a resource (to prevent them from getting back into the mine or cut wood)
+            };
+
+            // update gold mine thing + image (for debug) -- remove thing hosted
+
+            store.update([updatedHarvester]);
+            this.spawnThing(updatedHarvester);
+        } else {
+            console.warn(
+                `Thing '${builder.id}' of type '${
+                    builder.type
+                }' was removed from the world.`
+            );
+            store.remove([harvester]);
+        }
+
+        /*
+        const image = getElem(thing.id);
+        image.title = JSON.stringify(thing, null, 2);
+        store.update([source]);
+        */
     }
 
     findNextSpotAvailable(source, thingToSpawn) {
@@ -811,7 +849,7 @@ class Engine {
             if (goal && (goal.x !== x || goal.y !== y)) {
                 const updatedCoordinates = this.getCloserToGoal(thing, goal);
 
-                const updatedThing = {
+                let updatedThing = {
                     ...thing,
                     x: updatedCoordinates.x,
                     y: updatedCoordinates.y
@@ -823,7 +861,14 @@ class Engine {
                     if (goal.intent === 'build') {
                         this.handleBuild(updatedThing, goal.target);
                     } else if (goal.intent === 'harvest') {
-                        this.handleHarvest(updatedThing, goal.target);
+                        if (goal.target.goldContained > 0) {
+                            this.handleHarvest(updatedThing, goal.target);
+                            updatedThing = {
+                                ...updatedThing,
+                                x: undefined,
+                                y: undefined
+                            };
+                        }
                     }
                 }
 

@@ -40,7 +40,7 @@ export const THING_TYPES = {
         height: 3,
         width: 3,
         color: 'gold',
-        harvestTime: 500
+        harvestTime: 2000
     },
     townhall: {
         displayName: 'Town Hall',

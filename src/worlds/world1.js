@@ -8,8 +8,8 @@ export default {
         {
             type: 'peasant',
             owner: 0,
-            x: 3,
-            y: 9
+            x: 1,
+            y: 5
         },
         {
             type: 'peasant',
@@ -19,7 +19,7 @@ export default {
         },
         {
             type: 'goldmine',
-            goldContained: 50000,
+            goldContained: 100,
             x: 3,
             y: 5
         }

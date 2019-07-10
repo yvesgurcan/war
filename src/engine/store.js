@@ -159,11 +159,7 @@ class Store {
         return blocked;
     }
 
-    getCollisionWhileMoving(
-        source,
-        destination = {},
-        { right, left, up, down } = {}
-    ) {
+    getCollisionWhileMoving(source, destination = {}, { right, down } = {}) {
         const destinationSnappedX =
             Math.floor(destination.x || source.x) + (right && source.width);
         const destinationSnappedY =
