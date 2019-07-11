@@ -87,13 +87,22 @@ class Store {
 
     /* Selection */
 
-    getSelectionArray({ aggregateThings = false } = {}) {
+    getSelectionArray({ aggregateThings = false, aggregateType = false } = {}) {
         let selected = Object.keys(this.selected).map(id => this.selected[id]);
 
-        if (aggregateThings) {
-            selected.map(thing => ({
-                ...this.items[thing.id]
-            }));
+        if (aggregateThings || aggregateType) {
+            return selected.map(thing => {
+                const thingDetails = this.items[thing.id];
+                let thingTypeDetails = {};
+                if (aggregateType) {
+                    thingTypeDetails = THING_TYPES[thingDetails.type];
+                }
+
+                return {
+                    ...thingDetails,
+                    ...thingTypeDetails
+                };
+            });
         }
 
         return selected;
