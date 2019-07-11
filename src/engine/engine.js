@@ -10,7 +10,8 @@ import {
     THING_TYPES,
     GOLD_MINE,
     NEW_GAME,
-    INIT_WORLD
+    INIT_WORLD,
+    TILE
 } from './constants';
 
 import socket from '../websocket';
@@ -20,7 +21,9 @@ import { getElem, createElem } from './utils';
 import store from './store';
 import world from '../worlds/world1';
 
-let instaBuild = false;
+const instaBuild = false;
+const showGrid = false;
+
 let instance = null;
 
 let players = [
@@ -89,29 +92,31 @@ class Engine {
     }
 
     initGrid() {
-        const gridCanvas = getElem('grid');
-        gridCanvas.width = PLAYER_VIEW_WIDTH * TILE_SIZE;
-        gridCanvas.height = PLAYER_VIEW_HEIGHT * TILE_SIZE;
-        const gridContext = gridCanvas.getContext('2d');
+        if (showGrid) {
+            const gridCanvas = getElem('grid');
+            gridCanvas.width = PLAYER_VIEW_WIDTH * TILE_SIZE;
+            gridCanvas.height = PLAYER_VIEW_HEIGHT * TILE_SIZE;
+            const gridContext = gridCanvas.getContext('2d');
 
-        for (let y = 0; y <= PLAYER_VIEW_WIDTH; y++) {
-            gridContext.fillStyle = 'black';
-            gridContext.fillRect(
-                y * TILE_SIZE,
-                0,
-                1,
-                PLAYER_VIEW_HEIGHT * TILE_SIZE
-            );
-        }
+            for (let y = 0; y <= PLAYER_VIEW_WIDTH; y++) {
+                gridContext.fillStyle = 'black';
+                gridContext.fillRect(
+                    y * TILE_SIZE,
+                    0,
+                    1,
+                    PLAYER_VIEW_HEIGHT * TILE_SIZE
+                );
+            }
 
-        for (let x = 0; x <= PLAYER_VIEW_HEIGHT; x++) {
-            gridContext.fillStyle = 'black';
-            gridContext.fillRect(
-                0,
-                x * TILE_SIZE,
-                PLAYER_VIEW_WIDTH * TILE_SIZE,
-                1
-            );
+            for (let x = 0; x <= PLAYER_VIEW_HEIGHT; x++) {
+                gridContext.fillStyle = 'black';
+                gridContext.fillRect(
+                    0,
+                    x * TILE_SIZE,
+                    PLAYER_VIEW_WIDTH * TILE_SIZE,
+                    1
+                );
+            }
         }
     }
 
@@ -291,12 +296,14 @@ class Engine {
     /* Selection */
 
     selectThing(thing) {
-        const thingImage = getElem(thing.id);
+        const image = getElem(thing.id);
         console.log('select');
         this.unselectAllThings();
         store.select([thing.id]);
-        thingImage.style.border = '1px solid rgb(0, 200, 0)';
-        thingImage.style.zIndex = 100;
+        image.style.border = thing.noBorder
+            ? '1px solid transparent'
+            : '1px solid rgb(0, 200, 0)';
+        image.style.zIndex = 100;
 
         this.updateThingDescription(thing);
         if (thing.builder) {
@@ -305,10 +312,13 @@ class Engine {
     }
 
     unselectThing(thing) {
-        const thingImage = getElem(thing.id);
-        if (thingImage) {
-            thingImage.style.border = '1px solid black';
-            thingImage.style.zIndex = 90;
+        const image = getElem(thing.id);
+        if (image) {
+            image.style.border =
+                thing.image || thing.noBorder
+                    ? '1px solid transparent'
+                    : '1px solid black';
+            image.style.zIndex = 90;
         }
         store.unselect([thing.id]);
         this.hideBuildMenu();
@@ -316,12 +326,15 @@ class Engine {
     }
 
     unselectAllThings() {
-        const selected = store.getSelectionArray();
+        const selected = store.getSelectionArray({ aggregateType: true });
         selected.forEach(thing => {
-            const thingImage = getElem(thing.id);
-            if (thingImage) {
-                thingImage.style.border = '1px solid black';
-                thingImage.style.zIndex = 90;
+            const image = getElem(thing.id);
+            if (image) {
+                image.style.border =
+                    thing.image || thing.noBorder
+                        ? '1px solid transparent'
+                        : '1px solid black';
+                image.style.zIndex = 90;
             }
         });
         store.unselect();
@@ -662,7 +675,7 @@ class Engine {
                 console.log('build intent');
                 this.handleBuildIntent(thingDetails);
             } else if (selected.length > 0 && !target) {
-                if (id !== 'grid') {
+                if (id !== 'grid' && id !== 'world') {
                     console.log('out of bounds');
                     return;
                 }
@@ -676,7 +689,7 @@ class Engine {
                     console.log('unselect');
                     this.unselectAllThings();
                 }
-            } else if (target) {
+            } else if (target && !target.unselectable) {
                 const harvesters = thingDetails.filter(
                     thing => thing.harvester
                 );
@@ -796,7 +809,16 @@ class Engine {
     /* Game Loop */
 
     instantiateThing(thing, { startBuild = false } = {}) {
-        const { maxHealth, buildTime } = THING_TYPES[thing.type];
+        const thingType = THING_TYPES[thing.type];
+        if (!thingType) {
+            console.error(
+                `Could not instantiate thing of type '${thing.type}'.`,
+                { thing }
+            );
+            return null;
+        }
+
+        const { maxHealth, buildTime } = thingType;
         const thingInstance = {
             ...thing,
             health: startBuild ? 0 : maxHealth,
@@ -808,20 +830,38 @@ class Engine {
     }
 
     spawnThing(thing, { startBuild = false } = {}) {
+        if (!thing.id) {
+            console.error(
+                `Could not spawn thing of type '${
+                    thing.type
+                }'. No ID provided.`,
+                { thing }
+            );
+            return;
+        }
+
         const thingsContainer = getElem('things');
         const { top, left } = thingsContainer.getBoundingClientRect();
-        const player = this.players[thing.owner];
+        const player = this.players[thing.owner] || {};
+        const color = thing.color || player.color;
         const image = createElem('img');
         image.id = thing.id;
         image.style.position = 'absolute';
         image.style.width = thing.width * TILE_SIZE + 1;
         image.style.height = thing.height * TILE_SIZE + 1;
-        image.style.background = thing.color || player.color;
         image.style.boxSizing = 'border-box';
-        image.style.border = '1px solid black';
+        image.style.border =
+            thing.image || thing.noBorder
+                ? '1px solid transparent'
+                : '1px solid black';
         image.style.left = thing.x * TILE_SIZE + left;
         image.style.top = thing.y * TILE_SIZE + top;
         image.title = JSON.stringify({ ...thing }, null, 2);
+        image.style.background = thing.image ? null : color;
+
+        image.src = thing.image
+            ? `/assets/units/${world.metadata.climate}/${thing.image}.png`
+            : '';
 
         if (startBuild) {
             image.style.opacity = 0.5;
