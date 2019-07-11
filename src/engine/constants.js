@@ -7,6 +7,7 @@ export const MAX_FPS = 1000 / 30;
 
 export const BUILDING = 'building';
 export const UNIT = 'unit';
+export const TILE = 'tile';
 
 export const WORLD_CLIMATES = {
     forest: {
@@ -36,11 +37,22 @@ export const GOLD_MINE = 'goldmine';
 export const THING_TYPES = {
     goldmine: {
         displayName: 'Gold Mine',
-        class: UNIT,
+        class: BUILDING,
         height: 3,
         width: 3,
         color: 'gold',
-        harvestTime: 2000
+        harvestTime: 2000,
+        image: '0092'
+    },
+    wood: {
+        unselectable: true,
+        class: TILE,
+        height: 1,
+        width: 1,
+        color: 'rgb(0, 65, 0)',
+        harvestTime: 10000,
+        noBorder: true,
+        image: 'wood'
     },
     townhall: {
         displayName: 'Town Hall',
@@ -51,7 +63,8 @@ export const THING_TYPES = {
         maxHealth: 1200,
         foodProduction: 1,
         gold: 1000,
-        lumber: 600
+        lumber: 600,
+        image: '0074'
     },
     farm: {
         displayName: 'Farm',
@@ -62,7 +75,8 @@ export const THING_TYPES = {
         maxHealth: 400,
         foodProduction: 4,
         gold: 500,
-        lumber: 100
+        lumber: 100,
+        image: '0058'
     },
     barracks: {
         displayName: 'Barracks',
@@ -73,7 +87,8 @@ export const THING_TYPES = {
         maxHealth: 800,
         gold: 300,
         lumber: 400,
-        oil: 50
+        oil: 50,
+        image: '0060'
     },
     peasant: {
         displayName: 'Peasant',
