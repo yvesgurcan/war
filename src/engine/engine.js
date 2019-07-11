@@ -366,10 +366,18 @@ class Engine {
             image.style.position = 'absolute';
             image.style.width = thing.width * TILE_SIZE + 1;
             image.style.height = thing.height * TILE_SIZE + 1;
-            image.style.background = 'grey';
             image.style.boxSizing = 'border-box';
-            image.style.border = '1px solid black';
+            image.style.border =
+                thing.image || thing.noBorder
+                    ? '1px solid transparent'
+                    : '1px solid black';
             image.style.zIndex = -1; // don't show until the mouse moves on world view
+            image.src = thing.image
+                ? `/assets/units/${world.metadata.climate}/${thing.image}.png`
+                : '';
+            image.style.background = thing.image ? 'rgb(0, 180, 0)' : 'grey';
+            image.style.opacity = 0.5;
+
             thingsContainer.appendChild(image);
         }
     }
