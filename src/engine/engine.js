@@ -21,7 +21,8 @@ import store from './store';
 import world from '../worlds/world1';
 
 const instaBuild = false;
-const showGrid = false;
+const showGrid = true;
+const showThingImages = true;
 
 let instance = null;
 
@@ -314,7 +315,7 @@ class Engine {
         const image = getElem(thing.id);
         if (image) {
             image.style.border =
-                thing.image || thing.noBorder
+                (showThingImages && thing.image) || thing.noBorder
                     ? '1px solid transparent'
                     : '1px solid black';
             image.style.zIndex = 90;
@@ -330,7 +331,7 @@ class Engine {
             const image = getElem(thing.id);
             if (image) {
                 image.style.border =
-                    thing.image || thing.noBorder
+                    (showThingImages && thing.image) || thing.noBorder
                         ? '1px solid transparent'
                         : '1px solid black';
                 image.style.zIndex = 90;
@@ -371,9 +372,12 @@ class Engine {
                     ? '1px solid transparent'
                     : '1px solid black';
             image.style.zIndex = -1; // don't show until the mouse moves on world view
-            image.src = thing.image
-                ? `/assets/units/${world.metadata.climate}/${thing.image}.png`
-                : '';
+            image.src =
+                showThingImages && thing.image
+                    ? `/assets/units/${world.metadata.climate}/${
+                          thing.image
+                      }.png`
+                    : '';
             image.style.background = thing.image ? 'rgb(0, 180, 0)' : 'grey';
             image.style.opacity = 0.5;
 
@@ -855,11 +859,12 @@ class Engine {
         image.id = thing.id;
         image.style.position = 'absolute';
 
-        image.src = thing.image
-            ? `/assets/units/${world.metadata.climate}/${thing.image}.png`
-            : '';
+        image.src =
+            thing.image && showThingImages
+                ? `/assets/units/${world.metadata.climate}/${thing.image}.png`
+                : '';
 
-        if (thing.image) {
+        if (thing.image && showThingImages) {
             image.style.minWidth = thing.width * TILE_SIZE + 1;
             image.style.minHeight = thing.height * TILE_SIZE + 1;
         } else {
@@ -869,7 +874,7 @@ class Engine {
         image.style.boxSizing = 'border-box';
         image.style.objectFit = 'none';
         image.style.border =
-            thing.image || thing.noBorder
+            showThingImages && thing.image
                 ? '1px solid transparent'
                 : '1px solid black';
 
@@ -889,7 +894,7 @@ class Engine {
         }
 
         image.title = JSON.stringify({ ...thing }, null, 2);
-        image.style.background = thing.image ? null : color;
+        image.style.background = thing.image && showThingImages ? null : color;
 
         if (startBuild) {
             image.style.opacity = 0.5;
