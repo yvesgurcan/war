@@ -1,4 +1,4 @@
-export const TILE_SIZE = 32;
+export const TILE_SIZE = 34;
 
 export const PLAYER_VIEW_WIDTH = 14;
 export const PLAYER_VIEW_HEIGHT = 14;
@@ -100,7 +100,7 @@ export const THING_TYPES = {
         maxHealth: 50,
         food: 1,
         harvester: true,
-        image: 'peasant/peasant_05'
+        image: 'peasant/peasant_03'
     },
     knight: {
         displayName: 'Knight',

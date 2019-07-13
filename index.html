@@ -9,15 +9,16 @@
                 color: white;
                 user-select: none;
                 cursor: pointer;
+                -webkit-tap-highlight-color: transparent;
             }
             canvas {
                 position: fixed;
             }
             img {
                 text-indent: -10000px;
+                image-rendering: pixelated;
             }
             #resource-bar {
-                width: 448px;
                 height: 32px;
                 background: rgb(40, 40, 40);
                 border: 3px solid rgb(60, 60, 60);
@@ -34,13 +35,11 @@
                 margin-right: 5px;
             }
             #in-game-menu {
-                width: 448px;
                 height: 100px;
                 background: rgb(40, 40, 40);
                 border: 3px solid rgb(60, 60, 60);
                 box-sizing: border-box;
                 position: fixed;
-                top: 481px;
                 display: flex;
                 justify-content: space-between;
             }
@@ -48,6 +47,7 @@
                 width: 100px;
                 height: 100%;
                 padding: 5px;
+                display: none;
             }
             #action-menu {
                 width: 200px;
@@ -58,12 +58,12 @@
                 width: 150px;
                 height: 100%;
                 padding: 5px;
+                display: none;
             }
             #fps {
                 color: white;
                 background: black;
                 position: fixed;
-                left: 449px;
                 top: 0px;
             }
         </style>
@@ -110,5 +110,5 @@
         </div>
         <!-- right bar -->
         <div id="fps"></div>
-    <script type="text/javascript" src="main.c2d40fd3d705c1bf0a6b.js"></script></body>
+    <script type="text/javascript" src="main.59c2a92ae656d699f9da.js"></script></body>
 </html>
