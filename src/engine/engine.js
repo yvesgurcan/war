@@ -10,7 +10,8 @@ import {
     THING_TYPES,
     GOLD_MINE,
     NEW_GAME,
-    INIT_WORLD
+    INIT_WORLD,
+    TILE
 } from './constants';
 
 import socket from '../websocket';
@@ -21,7 +22,7 @@ import store from './store';
 import world from '../worlds/world1';
 
 const instaBuild = false;
-const showGrid = true;
+const showGrid = false;
 const showThingImages = true;
 
 let instance = null;
@@ -121,6 +122,17 @@ class Engine {
     }
 
     initMenu() {
+        const inGameMenu = getElem('in-game-menu');
+        inGameMenu.style.width = TILE_SIZE * PLAYER_VIEW_WIDTH;
+        inGameMenu.style.top = TILE_SIZE * PLAYER_VIEW_HEIGHT + 32 + 1;
+
+        const resoureceBar = getElem('resource-bar');
+        resoureceBar.style.width = TILE_SIZE * PLAYER_VIEW_WIDTH;
+
+        const fpsIndicator = getElem('fps');
+        fpsIndicator.style.left = TILE_SIZE * PLAYER_VIEW_WIDTH + 10;
+        fpsIndicator.style.top = 32;
+
         this.hideBuildMenu();
         this.hideThingDescription();
     }
@@ -380,6 +392,10 @@ class Engine {
                     : '';
             image.style.background = thing.image ? 'rgb(0, 180, 0)' : 'grey';
             image.style.opacity = 0.5;
+
+            if (TILE_SIZE >= 32 && thing.class !== TILE) {
+                image.style.objectFit = 'none';
+            }
 
             thingsContainer.appendChild(image);
         }
@@ -858,29 +874,49 @@ class Engine {
         const image = createElem('img');
         image.id = thing.id;
         image.style.position = 'absolute';
+        image.style.zIndex = 90;
 
         image.src =
             thing.image && showThingImages
                 ? `/assets/units/${world.metadata.climate}/${thing.image}.png`
                 : '';
 
+        const { naturalWidth, naturalHeight } = image;
+        const heightSnap = ((naturalHeight / 32) * TILE_SIZE) % TILE_SIZE;
+        const widthSnap = ((naturalWidth / 32) * TILE_SIZE) % TILE_SIZE;
+
         if (thing.image && showThingImages) {
-            image.style.minWidth = thing.width * TILE_SIZE + 1;
-            image.style.minHeight = thing.height * TILE_SIZE + 1;
+            image.style.width = Math.max(
+                TILE_SIZE + 1,
+                (naturalWidth / 32) * TILE_SIZE
+            );
+            image.style.height = Math.max(
+                TILE_SIZE + 1,
+                (naturalHeight / 32) * TILE_SIZE
+            );
+            image.style.minWidth = Math.max(
+                TILE_SIZE + 1,
+                (naturalWidth / 32) * TILE_SIZE
+            );
+            image.style.minHeight = Math.max(
+                TILE_SIZE + 1,
+                (naturalHeight / 32) * TILE_SIZE
+            );
         } else {
             image.style.width = thing.width * TILE_SIZE + 1;
             image.style.height = thing.height * TILE_SIZE + 1;
         }
+
         image.style.boxSizing = 'border-box';
-        image.style.objectFit = 'none';
+
+        if (TILE_SIZE >= 32 && thing.class !== TILE) {
+            image.style.objectFit = 'none';
+        }
+
         image.style.border =
             showThingImages && thing.image
                 ? '1px solid transparent'
                 : '1px solid black';
-
-        const { naturalWidth, naturalHeight } = image;
-        const heightSnap = naturalHeight % 32;
-        const widthSnap = naturalWidth % 32;
 
         if (naturalHeight > 32 && heightSnap !== 0) {
             image.style.top = thing.y * TILE_SIZE + top - heightSnap / 2;
@@ -956,8 +992,32 @@ class Engine {
                     image.title = JSON.stringify(updatedThing, null, 2);
 
                     const { naturalWidth, naturalHeight } = image;
-                    const heightSnap = naturalHeight % 32;
-                    const widthSnap = naturalWidth % 32;
+                    const heightSnap =
+                        ((naturalHeight / 32) * TILE_SIZE) % TILE_SIZE;
+                    const widthSnap =
+                        ((naturalWidth / 32) * TILE_SIZE) % TILE_SIZE;
+
+                    if (thing.image && showThingImages) {
+                        image.style.width = Math.max(
+                            TILE_SIZE * thing.width + 1,
+                            (naturalWidth / 32) * TILE_SIZE
+                        );
+                        image.style.height = Math.max(
+                            TILE_SIZE * thing.height + 1,
+                            (naturalHeight / 32) * TILE_SIZE
+                        );
+                        image.style.minWidth = Math.max(
+                            TILE_SIZE * thing.width + 1,
+                            (naturalWidth / 32) * TILE_SIZE
+                        );
+                        image.style.minHeight = Math.max(
+                            TILE_SIZE * thing.height + 1,
+                            (naturalHeight / 32) * TILE_SIZE
+                        );
+                    } else {
+                        image.style.width = thing.width * TILE_SIZE + 1;
+                        image.style.height = thing.height * TILE_SIZE + 1;
+                    }
 
                     if (naturalHeight > 32 && heightSnap !== 0) {
                         image.style.top =
