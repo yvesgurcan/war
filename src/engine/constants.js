@@ -100,7 +100,7 @@ export const THING_TYPES = {
         maxHealth: 50,
         food: 1,
         harvester: true,
-        image: 'peasant/peasant_05'
+        image: 'peasant/peasant_03'
     },
     knight: {
         displayName: 'Knight',
