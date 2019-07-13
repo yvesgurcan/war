@@ -53,6 +53,18 @@ export default {
             y: 6
         },
         {
+            type: 'knight',
+            owner: 0,
+            x: 4,
+            y: 4
+        },
+        {
+            type: 'ballista',
+            owner: 0,
+            x: 7,
+            y: 8
+        },
+        {
             type: 'townhall',
             owner: 0,
             x: 2,

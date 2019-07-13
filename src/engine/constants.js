@@ -99,16 +99,29 @@ export const THING_TYPES = {
         speed: 150 / 1000,
         maxHealth: 50,
         food: 1,
-        harvester: true
+        harvester: true,
+        image: 'peasant/peasant_05'
     },
-    catapult: {
-        displayName: 'Catapult',
+    knight: {
+        displayName: 'Knight',
         class: UNIT,
+        builder: true,
         height: 1,
         width: 1,
         speed: 200 / 1000,
+        maxHealth: 50,
+        food: 1,
+        image: 'knight/knight_05'
+    },
+    ballista: {
+        displayName: 'Ballista',
+        class: UNIT,
+        height: 1,
+        width: 1,
+        speed: 75 / 1000,
         maxHealth: 120,
-        food: 1
+        food: 1,
+        image: 'ballista/ballista_03'
     }
 };
 

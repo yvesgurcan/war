@@ -10,8 +10,7 @@ import {
     THING_TYPES,
     GOLD_MINE,
     NEW_GAME,
-    INIT_WORLD,
-    TILE
+    INIT_WORLD
 } from './constants';
 
 import socket from '../websocket';
@@ -29,7 +28,7 @@ let instance = null;
 let players = [
     {
         id: uuid(),
-        color: 'rgb(180, 0, 0)',
+        color: 'rgb(30, 30, 240)',
         race: 'human',
         gold: 1000,
         lumber: 1000,
@@ -37,7 +36,7 @@ let players = [
     },
     {
         id: uuid(),
-        color: 'rgb(0, 0, 180)',
+        color: 'rgb(180, 0, 0)',
         race: 'human',
         gold: 5000,
         lumber: 2000,
@@ -855,21 +854,42 @@ class Engine {
         const image = createElem('img');
         image.id = thing.id;
         image.style.position = 'absolute';
-        image.style.width = thing.width * TILE_SIZE + 1;
-        image.style.height = thing.height * TILE_SIZE + 1;
-        image.style.boxSizing = 'border-box';
-        image.style.border =
-            thing.image || thing.noBorder
-                ? '1px solid transparent'
-                : '1px solid black';
-        image.style.left = thing.x * TILE_SIZE + left;
-        image.style.top = thing.y * TILE_SIZE + top;
-        image.title = JSON.stringify({ ...thing }, null, 2);
-        image.style.background = thing.image ? null : color;
 
         image.src = thing.image
             ? `/assets/units/${world.metadata.climate}/${thing.image}.png`
             : '';
+
+        if (thing.image) {
+            image.style.minWidth = thing.width * TILE_SIZE + 1;
+            image.style.minHeight = thing.height * TILE_SIZE + 1;
+        } else {
+            image.style.width = thing.width * TILE_SIZE + 1;
+            image.style.height = thing.height * TILE_SIZE + 1;
+        }
+        image.style.boxSizing = 'border-box';
+        image.style.objectFit = 'none';
+        image.style.border =
+            thing.image || thing.noBorder
+                ? '1px solid transparent'
+                : '1px solid black';
+
+        const { naturalWidth, naturalHeight } = image;
+        const heightSnap = naturalHeight % 32;
+        const widthSnap = naturalWidth % 32;
+
+        if (naturalHeight > 32 && heightSnap !== 0) {
+            image.style.top = thing.y * TILE_SIZE + top - heightSnap / 2;
+        } else {
+            image.style.top = thing.y * TILE_SIZE + top;
+        }
+        if (naturalWidth > 32 && widthSnap !== 0) {
+            image.style.left = thing.x * TILE_SIZE + left - widthSnap / 2;
+        } else {
+            image.style.left = thing.x * TILE_SIZE + left;
+        }
+
+        image.title = JSON.stringify({ ...thing }, null, 2);
+        image.style.background = thing.image ? null : color;
 
         if (startBuild) {
             image.style.opacity = 0.5;
@@ -928,9 +948,30 @@ class Engine {
 
                 const image = getElem(id);
                 if (image) {
-                    image.style.left = updatedCoordinates.x * TILE_SIZE + left;
-                    image.style.top = updatedCoordinates.y * TILE_SIZE + top;
                     image.title = JSON.stringify(updatedThing, null, 2);
+
+                    const { naturalWidth, naturalHeight } = image;
+                    const heightSnap = naturalHeight % 32;
+                    const widthSnap = naturalWidth % 32;
+
+                    if (naturalHeight > 32 && heightSnap !== 0) {
+                        image.style.top =
+                            updatedCoordinates.y * TILE_SIZE +
+                            top -
+                            heightSnap / 2;
+                    } else {
+                        image.style.top =
+                            updatedCoordinates.y * TILE_SIZE + top;
+                    }
+                    if (naturalWidth > 32 && widthSnap !== 0) {
+                        image.style.left =
+                            updatedCoordinates.x * TILE_SIZE +
+                            left -
+                            widthSnap / 2;
+                    } else {
+                        image.style.left =
+                            updatedCoordinates.x * TILE_SIZE + left;
+                    }
                 }
             }
 
