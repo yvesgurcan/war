@@ -356,8 +356,8 @@ class Engine {
 
     /* Build */
 
-    startBuildPreview(buildingType) {
-        const thing = THING_TYPES[buildingType];
+    startBuildPreview(type) {
+        const thing = THING_TYPES[type];
 
         const canAffordBuild = this.canAffordBuild(this.currentPlayer, thing);
         if (canAffordBuild) {
@@ -367,11 +367,11 @@ class Engine {
 
             this.buildPreview = {
                 ...thing,
-                type: buildingType,
+                type,
                 owner: this.currentPlayer
             };
 
-            const sprite = this.getSprite(thing);
+            const sprite = this.getSprite({ ...thing, type });
 
             const thingsContainer = getElem('things');
             const image = createElem('img');

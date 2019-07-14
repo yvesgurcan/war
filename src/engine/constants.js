@@ -74,8 +74,7 @@ export const THING_TYPES = {
         maxHealth: 400,
         foodProduction: 4,
         gold: 500,
-        lumber: 100,
-        image: '0058'
+        lumber: 100
     },
     barracks: {
         displayName: 'Barracks',
@@ -86,8 +85,7 @@ export const THING_TYPES = {
         maxHealth: 800,
         gold: 300,
         lumber: 400,
-        oil: 50,
-        image: '0060'
+        oil: 50
     },
     peasant: {
         displayName: 'Peasant',
