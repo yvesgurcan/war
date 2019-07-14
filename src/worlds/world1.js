@@ -65,6 +65,12 @@ export default {
             y: 8
         },
         {
+            type: 'elf',
+            owner: 0,
+            x: 8,
+            y: 11
+        },
+        {
             type: 'townhall',
             owner: 0,
             x: 2,

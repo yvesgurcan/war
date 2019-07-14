@@ -63,8 +63,7 @@ export const THING_TYPES = {
         maxHealth: 1200,
         foodProduction: 1,
         gold: 1000,
-        lumber: 600,
-        image: '0074'
+        lumber: 600
     },
     farm: {
         displayName: 'Farm',
@@ -105,13 +104,22 @@ export const THING_TYPES = {
     knight: {
         displayName: 'Knight',
         class: UNIT,
-        builder: true,
         height: 1,
         width: 1,
         speed: 200 / 1000,
         maxHealth: 50,
         food: 1,
         image: 'knight/knight_05'
+    },
+    elf: {
+        displayName: 'Elf',
+        class: UNIT,
+        height: 1,
+        width: 1,
+        speed: 200 / 1000,
+        maxHealth: 50,
+        food: 1,
+        image: 'elf/elf'
     },
     ballista: {
         displayName: 'Ballista',

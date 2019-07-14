@@ -327,7 +327,7 @@ class Engine {
         const image = getElem(thing.id);
         if (image) {
             image.style.border =
-                (showThingImages && thing.image) || thing.noBorder
+                !image.error || thing.noBorder
                     ? '1px solid transparent'
                     : '1px solid black';
             image.style.zIndex = 90;
@@ -343,7 +343,7 @@ class Engine {
             const image = getElem(thing.id);
             if (image) {
                 image.style.border =
-                    (showThingImages && thing.image) || thing.noBorder
+                    !image.error || thing.noBorder
                         ? '1px solid transparent'
                         : '1px solid black';
                 image.style.zIndex = 90;
@@ -371,31 +371,31 @@ class Engine {
                 owner: this.currentPlayer
             };
 
+            const sprite = this.getSprite(thing);
+
             const thingsContainer = getElem('things');
             const image = createElem('img');
             image.id = 'build-preview';
-            image.src = ''; // should be path to building visual design
+            image.src = sprite;
             image.style.position = 'absolute';
             image.style.width = thing.width * TILE_SIZE + 1;
             image.style.height = thing.height * TILE_SIZE + 1;
             image.style.boxSizing = 'border-box';
-            image.style.border =
-                thing.image || thing.noBorder
-                    ? '1px solid transparent'
-                    : '1px solid black';
-            image.style.zIndex = -1; // don't show until the mouse moves on world view
-            image.src =
-                showThingImages && thing.image
-                    ? `/assets/units/${world.metadata.climate}/${
-                          thing.image
-                      }.png`
-                    : '';
-            image.style.background = thing.image ? 'rgb(0, 180, 0)' : 'grey';
+            image.style.background = 'rgb(0, 180, 0)';
             image.style.opacity = 0.5;
+            image.style.zIndex = -1; // don't show until the mouse moves on world view
 
             if (TILE_SIZE >= 32 && thing.class !== TILE) {
                 image.style.objectFit = 'none';
             }
+
+            image.onerror = () => {
+                image.style.border = '1px solid black';
+            };
+
+            image.onload = () => {
+                image.style.border = '1px solid transparent';
+            };
 
             thingsContainer.appendChild(image);
         }
@@ -856,6 +856,21 @@ class Engine {
         return { id, ...thingInstance };
     }
 
+    getSprite(thing) {
+        if (!showThingImages) {
+            return '';
+        }
+
+        const { climate } = this.world;
+        const { image, class: thingClass, type } = thing;
+
+        if (image) {
+            return `/assets/${climate}/units/${image}.png`;
+        }
+
+        return `/assets/${climate}/${thingClass}s/${type}/001.png`;
+    }
+
     spawnThing(thing, { startBuild = false } = {}) {
         if (!thing.id) {
             console.error(
@@ -869,68 +884,70 @@ class Engine {
 
         const thingsContainer = getElem('things');
         const { top, left } = thingsContainer.getBoundingClientRect();
-        const player = this.players[thing.owner] || {};
-        const color = thing.color || player.color;
+
         const image = createElem('img');
         image.id = thing.id;
         image.style.position = 'absolute';
+        image.style.boxSizing = 'border-box';
         image.style.zIndex = 90;
 
-        image.src =
-            thing.image && showThingImages
-                ? `/assets/units/${world.metadata.climate}/${thing.image}.png`
-                : '';
+        const sprite = this.getSprite(thing);
 
-        const { naturalWidth, naturalHeight } = image;
-        const heightSnap = ((naturalHeight / 32) * TILE_SIZE) % TILE_SIZE;
-        const widthSnap = ((naturalWidth / 32) * TILE_SIZE) % TILE_SIZE;
+        image.src = sprite;
 
-        if (thing.image && showThingImages) {
+        image.onerror = () => {
+            const player = this.players[thing.owner] || {};
+            const color = thing.color || player.color;
+
+            image.style.border = '1px solid black';
+            image.style.width = thing.width * TILE_SIZE + 1;
+            image.style.height = thing.height * TILE_SIZE + 1;
+            image.style.background = color;
+            image.style.top = thing.y * TILE_SIZE + top;
+            image.style.left = thing.x * TILE_SIZE + left;
+            image.error = true;
+        };
+
+        image.onload = event => {
+            const { naturalWidth, naturalHeight } = event.target;
+            image.style.border = '1px solid transparent';
             image.style.width = Math.max(
-                TILE_SIZE + 1,
+                TILE_SIZE * thing.width + 1,
                 (naturalWidth / 32) * TILE_SIZE
             );
             image.style.height = Math.max(
-                TILE_SIZE + 1,
+                TILE_SIZE * thing.height + 1,
                 (naturalHeight / 32) * TILE_SIZE
             );
             image.style.minWidth = Math.max(
-                TILE_SIZE + 1,
+                TILE_SIZE * thing.width + 1,
                 (naturalWidth / 32) * TILE_SIZE
             );
             image.style.minHeight = Math.max(
-                TILE_SIZE + 1,
+                TILE_SIZE * thing.height + 1,
                 (naturalHeight / 32) * TILE_SIZE
             );
-        } else {
-            image.style.width = thing.width * TILE_SIZE + 1;
-            image.style.height = thing.height * TILE_SIZE + 1;
-        }
 
-        image.style.boxSizing = 'border-box';
+            const heightSnap = ((naturalHeight / 32) * TILE_SIZE) % TILE_SIZE;
+            const widthSnap = ((naturalWidth / 32) * TILE_SIZE) % TILE_SIZE;
 
-        if (TILE_SIZE >= 32 && thing.class !== TILE) {
-            image.style.objectFit = 'none';
-        }
+            if (TILE_SIZE >= 32 && thing.class !== TILE) {
+                image.style.objectFit = 'none';
+            }
 
-        image.style.border =
-            showThingImages && thing.image
-                ? '1px solid transparent'
-                : '1px solid black';
-
-        if (naturalHeight > 32 && heightSnap !== 0) {
-            image.style.top = thing.y * TILE_SIZE + top - heightSnap / 2;
-        } else {
-            image.style.top = thing.y * TILE_SIZE + top;
-        }
-        if (naturalWidth > 32 && widthSnap !== 0) {
-            image.style.left = thing.x * TILE_SIZE + left - widthSnap / 2;
-        } else {
-            image.style.left = thing.x * TILE_SIZE + left;
-        }
+            if (naturalHeight > 32 && heightSnap !== 0 && thing.height === 1) {
+                image.style.top = thing.y * TILE_SIZE + top - heightSnap / 2;
+            } else {
+                image.style.top = thing.y * TILE_SIZE + top;
+            }
+            if (naturalWidth > 32 && widthSnap !== 0 && thing.width === 1) {
+                image.style.left = thing.x * TILE_SIZE + left - widthSnap / 2;
+            } else {
+                image.style.left = thing.x * TILE_SIZE + left;
+            }
+        };
 
         image.title = JSON.stringify({ ...thing }, null, 2);
-        image.style.background = thing.image && showThingImages ? null : color;
 
         if (startBuild) {
             image.style.opacity = 0.5;
