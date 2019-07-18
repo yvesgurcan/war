@@ -390,10 +390,12 @@ class Engine {
             }
 
             image.onerror = () => {
+                image.error = true;
                 image.style.border = '1px solid black';
             };
 
             image.onload = () => {
+                image.error = false;
                 image.style.border = '1px solid transparent';
             };
 
@@ -518,23 +520,43 @@ class Engine {
     handleHarvest(harvester, target) {
         const resource = {
             ...target,
-            thingsHosted: [harvester.id]
+            thingsHosted: [...(target.thingsHosted || []), harvester.id]
         };
 
-        // update gold mine thing + image (for debug) -- subtract gold harvested and add thing hosted
+        if (resource.type === GOLD_MINE) {
+            resource.goldContained = Math.max(0, resource.goldContained - 100);
+            const image = getElem(resource.id);
+            image.src = this.getSprite(resource, { name: 'active' });
+            store.update([resource]);
+
+            const isSelected = store.isSelected(resource);
+            if (isSelected) {
+                this.updateThingDescription(resource);
+            }
+        }
 
         this.destroyThing(harvester);
 
         setTimeout(
-            () => this.handleHarvestFinished(harvester, resource),
+            () => this.handleHarvestFinished(harvester.id, resource.id),
             resource.harvestTime
         );
     }
 
-    handleHarvestFinished(harvester, source) {
-        const { thingsHosted } = source;
+    handleHarvestFinished(harvesterId, resourceId) {
+        const harvester = store.getById(harvesterId, { aggregateType: true });
+        const resource = store.getById(resourceId, { aggregateType: true });
 
-        const { x, y, failed } = this.findNextSpotAvailable(source, harvester);
+        if (!resource) {
+            return;
+        }
+
+        const { thingsHosted } = resource;
+
+        const { x, y, failed } = this.findNextSpotAvailable(
+            resource,
+            harvester
+        );
         if (!failed) {
             const updatedHarvester = {
                 ...harvester,
@@ -543,24 +565,69 @@ class Engine {
                 // harvester should be flagged as carrying a resource (to prevent them from getting back into the mine or cut wood)
             };
 
-            // update gold mine thing + image (for debug) -- remove thing hosted
+            let updatedResource = { ...resource };
+            if (resource.type === GOLD_MINE) {
+                const updatedThingsHosted = thingsHosted.filter(
+                    id => id !== harvester.id
+                );
+
+                updatedResource = {
+                    ...resource,
+                    thingsHosted: updatedThingsHosted
+                };
+
+                if (updatedResource.goldContained <= 0) {
+                    if (updatedResource.thingsHosted.length > 0) {
+                        store.update([updatedHarvester]);
+                        updatedResource.thingsHosted.forEach(thingId =>
+                            this.handleHarvestInterrupted(thingId, resource)
+                        );
+                    }
+
+                    this.destroyThing(resource);
+                    store.remove([resource]);
+                } else if (updatedThingsHosted.length === 0) {
+                    const image = getElem(resource.id);
+                    image.src = this.getSprite(resource);
+                }
+            }
+
+            store.update([updatedHarvester, updatedResource]);
+            this.spawnThing(updatedHarvester);
+        } else {
+            console.warn(
+                `Thing '${harvester.id}' of type '${
+                    harvester.type
+                }' was removed from the world.`
+            );
+            store.remove([harvester]);
+        }
+    }
+
+    handleHarvestInterrupted(harvesterId, resource) {
+        const harvester = store.getById(harvesterId, { aggregateType: true });
+        const { x, y, failed } = this.findNextSpotAvailable(
+            resource,
+            harvester
+        );
+
+        if (!failed) {
+            const updatedHarvester = {
+                ...harvester,
+                x,
+                y
+            };
 
             store.update([updatedHarvester]);
             this.spawnThing(updatedHarvester);
         } else {
             console.warn(
-                `Thing '${builder.id}' of type '${
-                    builder.type
+                `Thing '${harvester.id}' of type '${
+                    harvester.type
                 }' was removed from the world.`
             );
             store.remove([harvester]);
         }
-
-        /*
-        const image = getElem(thing.id);
-        image.title = JSON.stringify(thing, null, 2);
-        store.update([source]);
-        */
     }
 
     findNextSpotAvailable(source, thingToSpawn) {
@@ -646,7 +713,8 @@ class Engine {
             console.warn(
                 `Could not find an adjacent spot to spawn '${
                     thingToSpawn.id
-                }' from '${source.id}'.`
+                }' from '${source.id}'.`,
+                { thingToSpawn, source }
             );
             return { failed: true };
         }
@@ -856,7 +924,7 @@ class Engine {
         return { id, ...thingInstance };
     }
 
-    getSprite(thing) {
+    getSprite(thing, { name = '001' } = {}) {
         if (!showThingImages) {
             return '';
         }
@@ -868,7 +936,7 @@ class Engine {
             return `/assets/${climate}/units/${image}.png`;
         }
 
-        return `/assets/${climate}/${thingClass}s/${type}/001.png`;
+        return `/assets/${climate}/${thingClass}s/${type}/${name}.png`;
     }
 
     spawnThing(thing, { startBuild = false } = {}) {
@@ -899,13 +967,13 @@ class Engine {
             const player = this.players[thing.owner] || {};
             const color = thing.color || player.color;
 
+            image.error = true;
             image.style.border = '1px solid black';
             image.style.width = thing.width * TILE_SIZE + 1;
             image.style.height = thing.height * TILE_SIZE + 1;
             image.style.background = color;
             image.style.top = thing.y * TILE_SIZE + top;
             image.style.left = thing.x * TILE_SIZE + left;
-            image.error = true;
         };
 
         image.onload = event => {

@@ -229,12 +229,15 @@ class Store {
     update(thingsToUpdate, { replace = false } = {}) {
         thingsToUpdate.forEach(thingToUpdate => {
             const thing = this.items[thingToUpdate.id];
-            const updatedThing = {
-                ...(!replace && { ...thing }),
-                ...thingToUpdate
-            };
 
-            this.items[thingToUpdate.id] = this.sanitizeThing(updatedThing);
+            if (thing) {
+                const updatedThing = {
+                    ...(!replace && { ...thing }),
+                    ...thingToUpdate
+                };
+
+                this.items[thingToUpdate.id] = this.sanitizeThing(updatedThing);
+            }
         });
     }
 

@@ -26,7 +26,7 @@ export default {
     things: [
         {
             type: 'goldmine',
-            goldContained: 100,
+            goldContained: 500,
             x: 3,
             y: 5
         },
@@ -51,6 +51,13 @@ export default {
             owner: 0,
             x: 1,
             y: 6
+        },
+        ,
+        {
+            type: 'peasant',
+            owner: 0,
+            x: 1,
+            y: 7
         },
         {
             type: 'knight',

@@ -41,8 +41,7 @@ export const THING_TYPES = {
         height: 3,
         width: 3,
         color: 'gold',
-        harvestTime: 2000,
-        image: '0092'
+        harvestTime: 2000
     },
     wood: {
         unselectable: true,
