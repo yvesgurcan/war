@@ -126,8 +126,8 @@ class Engine {
         inGameMenu.style.width = TILE_SIZE * PLAYER_VIEW_WIDTH;
         inGameMenu.style.top = TILE_SIZE * PLAYER_VIEW_HEIGHT + 32 + 1;
 
-        const resoureceBar = getElem('resource-bar');
-        resoureceBar.style.width = TILE_SIZE * PLAYER_VIEW_WIDTH;
+        const resourceBar = getElem('resource-bar');
+        resourceBar.style.width = TILE_SIZE * PLAYER_VIEW_WIDTH;
 
         const fpsIndicator = getElem('fps');
         fpsIndicator.style.left = TILE_SIZE * PLAYER_VIEW_WIDTH + 10;
