@@ -95,8 +95,7 @@ export const THING_TYPES = {
         speed: 150 / 1000,
         maxHealth: 50,
         food: 1,
-        harvester: true,
-        image: 'peasant/peasant_03'
+        harvester: true
     },
     knight: {
         displayName: 'Knight',

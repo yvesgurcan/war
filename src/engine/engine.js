@@ -523,8 +523,15 @@ class Engine {
             thingsHosted: [...(target.thingsHosted || []), harvester.id]
         };
 
+        let amountHarvested = 0;
+        let resourceHarvested = null;
         if (resource.type === GOLD_MINE) {
-            resource.goldContained = Math.max(0, resource.goldContained - 100);
+            resourceHarvested = 'gold';
+            const goldContained = Math.max(0, resource.goldContained - 100);
+            amountHarvested = Math.min(100, goldContained);
+
+            resource.goldContained = goldContained;
+
             const image = getElem(resource.id);
             image.src = this.getSprite(resource, { name: 'active' });
             store.update([resource]);
@@ -539,11 +546,18 @@ class Engine {
 
         setTimeout(
             () => this.handleHarvestFinished(harvester.id, resource.id),
-            resource.harvestTime
+            resource.harvestTime,
+            resourceHarvested,
+            amountHarvested
         );
     }
 
-    handleHarvestFinished(harvesterId, resourceId) {
+    handleHarvestFinished(
+        harvesterId,
+        resourceId,
+        resourceHarvested,
+        amountHarvested
+    ) {
         const harvester = store.getById(harvesterId, { aggregateType: true });
         const resource = store.getById(resourceId, { aggregateType: true });
 
@@ -561,8 +575,9 @@ class Engine {
             const updatedHarvester = {
                 ...harvester,
                 x,
-                y
-                // harvester should be flagged as carrying a resource (to prevent them from getting back into the mine or cut wood)
+                y,
+                resourceHarvested,
+                amountHarvested
             };
 
             let updatedResource = { ...resource };
@@ -593,7 +608,7 @@ class Engine {
             }
 
             store.update([updatedHarvester, updatedResource]);
-            this.spawnThing(updatedHarvester);
+            this.spawnThing(updatedHarvester, { name: '066' });
         } else {
             console.warn(
                 `Thing '${harvester.id}' of type '${
@@ -939,7 +954,7 @@ class Engine {
         return `/assets/${climate}/${thingClass}s/${type}/${name}.png`;
     }
 
-    spawnThing(thing, { startBuild = false } = {}) {
+    spawnThing(thing, { startBuild = false, name = undefined } = {}) {
         if (!thing.id) {
             console.error(
                 `Could not spawn thing of type '${
@@ -959,7 +974,7 @@ class Engine {
         image.style.boxSizing = 'border-box';
         image.style.zIndex = 90;
 
-        const sprite = this.getSprite(thing);
+        const sprite = this.getSprite(thing, { name });
 
         image.src = sprite;
 
