@@ -139,7 +139,8 @@ export const THING_PROPERTIES = [
     'health',
     'timeToBuild',
     'thingsHosted',
-    'goldContained'
+    'goldContained',
+    'resourceHarvested'
 ];
 
 export const BUILDING_NAMES = Object.keys(THING_TYPES).filter(

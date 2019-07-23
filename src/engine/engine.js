@@ -545,10 +545,14 @@ class Engine {
         this.destroyThing(harvester);
 
         setTimeout(
-            () => this.handleHarvestFinished(harvester.id, resource.id),
-            resource.harvestTime,
-            resourceHarvested,
-            amountHarvested
+            () =>
+                this.handleHarvestFinished(
+                    harvester.id,
+                    resource.id,
+                    resourceHarvested,
+                    amountHarvested
+                ),
+            resource.harvestTime
         );
     }
 
@@ -804,8 +808,13 @@ class Engine {
                     thing => thing.harvester
                 );
                 if (harvesters.length > 0 && target.type === GOLD_MINE) {
-                    console.log('harvest');
-                    this.handleHarvestIntent(harvesters, target);
+                    const areEmpty = thingDetails.filter(
+                        thing => !thing.resourceHarvested
+                    );
+                    if (areEmpty.length > 0) {
+                        console.log('harvest');
+                        this.handleHarvestIntent(areEmpty, target);
+                    }
                 } else {
                     this.selectThing(target);
                 }
