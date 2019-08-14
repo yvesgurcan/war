@@ -294,6 +294,18 @@ class Engine {
                 thingHealth.innerHTML = thing.health;
                 const thingMaxHealth = getElem('thing-maxhealth');
                 thingMaxHealth.innerHTML = thing.maxHealth;
+
+                const currentHealth = getElem('thing-current-health-bar');
+
+                const healthPercentage = thing.health/thing.maxHealth*100;
+                currentHealth.style.width = `${healthPercentage}%`;
+                if (healthPercentage < 20) {
+                    currentHealth.style.background = 'red';
+                } else if (healthPercentage < 60) {
+                    currentHealth.style.background = 'yellow';
+                } else {
+                    currentHealth.style.background = 'green';
+                }
             }
 
             const goldContained = getElem('gold-contained');

@@ -45,11 +45,29 @@
                 display: flex;
                 justify-content: space-between;
             }
+            #minimap {
+                width: 94px;
+                height: 94px;
+                border-right: 1px solid rgb(60, 60, 60);
+                background: black;
+                position: unset;
+            }
             #thing-description {
                 width: 100px;
                 height: 100%;
                 padding: 5px;
                 display: none;
+            }
+            #thing-max-health-bar {
+                border: 1px solid black;
+                background: black;
+                height: 10px;
+                display: flex;
+                align-items: center;
+            }
+            #thing-current-health-bar {
+                background: green;
+                height: 100%;
             }
             #action-menu {
                 width: 200px;
@@ -96,10 +114,15 @@
         <div id="things"></div>
         <!-- bottom bar -->
         <div id="in-game-menu">
+            <canvas id="minimap">
+            </canvas>
             <div id="thing-description">
                 <div id="thing-name"></div>
                 <div id="thing-health-ratio">
                     <span id="thing-health"></span>/<span id="thing-maxhealth"></span>
+                    <div id="thing-max-health-bar">
+                        <div id="thing-current-health-bar"></div>
+                    </div>
                 </div>
                 <div id="gold-contained"></div>
             </div>
@@ -112,5 +135,6 @@
         </div>
         <!-- right bar -->
         <div id="fps"></div>
+        <
     </body>
 </html>
